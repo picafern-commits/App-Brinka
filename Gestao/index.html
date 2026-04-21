@@ -3063,15 +3063,52 @@ function recalcLastTrabIdFromList(trabalhosLista){
   }catch(e){}
 }
 
-function importBackupDataObject(data){
+async function syncBackupCollectionToFirebase(collectionName, items){
+  if(!Array.isArray(items)) return { upserts:0, deletes:0 };
+  if(typeof ensureFirebaseReady !== 'function' || typeof getDocs !== 'function' || typeof collection !== 'function'){
+    return { upserts:0, deletes:0 };
+  }
+  await ensureFirebaseReady();
+  const snap = await getDocs(collection(firestoreDb, collectionName));
+  const remoteIds = new Set(snap.docs.map(docSnap => String(docSnap.id)));
+  const nextIds = new Set();
+  let upserts = 0;
+  let deletes = 0;
+
+  for(const rawItem of items){
+    if(!rawItem || typeof rawItem !== 'object') continue;
+    const item = { ...rawItem };
+    if(!item.id){
+      item.id = `${collectionName}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+    }
+    nextIds.add(String(item.id));
+    await upsertRemote(collectionName, item);
+    upserts += 1;
+  }
+
+  for(const remoteId of remoteIds){
+    if(!nextIds.has(remoteId)){
+      await removeRemote(collectionName, remoteId);
+      deletes += 1;
+    }
+  }
+  return { upserts, deletes };
+}
+
+async function importBackupDataObject(data){
   if(!data || typeof data !== 'object'){
     alert('Backup inválido.');
     return;
   }
-  const novosTrabalhos = Array.isArray(data.trabalhos) ? data.trabalhos : [];
+  const novosTrabalhos = (Array.isArray(data.trabalhos) ? data.trabalhos : []).map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape(item) : item);
   const novosClientes = Array.isArray(data.clientes) ? data.clientes : [];
   const novosPagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : [];
 
+  const keys = (typeof STORAGE_KEYS === 'object' && STORAGE_KEYS) ? STORAGE_KEYS : { trabalhos:'ge_trabalhos', clientes:'ge_clientes', pagamentos:'ge_pagamentos', lastTrabId:'ge_last_trab_id' };
+
+  localStorage.setItem(keys.trabalhos, JSON.stringify(novosTrabalhos));
+  localStorage.setItem(keys.clientes, JSON.stringify(novosClientes));
+  localStorage.setItem(keys.pagamentos, JSON.stringify(novosPagamentos));
   localStorage.setItem('trabalhos', JSON.stringify(novosTrabalhos));
   localStorage.setItem('clientes', JSON.stringify(novosClientes));
   localStorage.setItem('pagamentos', JSON.stringify(novosPagamentos));
@@ -3080,29 +3117,46 @@ function importBackupDataObject(data){
     if(typeof window.trabalhos !== 'undefined') window.trabalhos = novosTrabalhos;
     if(typeof window.clientes !== 'undefined') window.clientes = novosClientes;
     if(typeof window.pagamentos !== 'undefined') window.pagamentos = novosPagamentos;
+    if(typeof trabalhos !== 'undefined') trabalhos = novosTrabalhos;
+    if(typeof clientes !== 'undefined') clientes = novosClientes;
+    if(typeof pagamentos !== 'undefined') pagamentos = novosPagamentos;
   }catch(e){}
 
   recalcLastTrabIdFromList(novosTrabalhos);
+
+  let remoteSummary = '';
+  try{
+    const [trabSync, cliSync, pagSync] = await Promise.all([
+      syncBackupCollectionToFirebase('trabalhos', novosTrabalhos),
+      syncBackupCollectionToFirebase('clientes', novosClientes),
+      syncBackupCollectionToFirebase('pagamentos', novosPagamentos)
+    ]);
+    remoteSummary = `
+Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
+  }catch(err){
+    console.error('Erro ao sincronizar backup para Firebase:', err);
+    alert('Backup importado localmente, mas houve erro a sincronizar com a Firebase.');
+  }
 
   try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
   try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
   try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
   try { if(typeof renderDashboard === 'function') renderDashboard(); } catch(e){}
-  try { if(typeof renderRelatorios === 'function') { renderRelatorios(); try{ renderAdvancedReports(); }catch(e){} }
-  try{ renderAdvancedReports(); }catch(e){} } catch(e){}
+  try { if(typeof renderRelatorios === 'function') { renderRelatorios(); try{ renderAdvancedReports(); }catch(e){} } } catch(e){}
+  try { if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); } catch(e){}
   try { if(typeof loadAllData === 'function') loadAllData(); } catch(e){}
 
-  alert('Backup importado com sucesso.');
+  alert(`Backup importado com sucesso.${remoteSummary}`);
 }
 
 function importBackupFile(event){
   const file = event && event.target && event.target.files ? event.target.files[0] : null;
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = function(e){
+  reader.onload = async function(e){
     try{
       const data = JSON.parse(e.target.result);
-      importBackupDataObject(data);
+      await importBackupDataObject(data);
       if(event.target) event.target.value = '';
     }catch(err){
       alert('Não foi possível ler o backup.');
@@ -3726,6 +3780,7 @@ let presenceVisibilityBound = false;
 let onlineUsersCache = [];
 const PRESENCE_COLLECTION = 'presence_status';
 const PRESENCE_TIMEOUT_MS = 70000;
+const PRESENCE_SESSION_STORAGE_KEY = 'ge_presence_session_id';
 const ONLINE_WIDGET_KEY = 'ge_online_widget_hidden';
 
 
@@ -3825,23 +3880,42 @@ function initOnlineUsersUi(){
   const hidden = (() => { try{ return localStorage.getItem(ONLINE_WIDGET_KEY) === '1'; }catch(e){ return false; } })();
   toggleOnlineUsersCard(!hidden);
 }
+function getRenderableOnlineUsers(){
+  const map = new Map();
+  for(const user of onlineUsersCache || []){
+    if(!user) continue;
+    const key = normalizeRoleEmail(user.email) || String(user.id || user.username || Math.random());
+    const prev = map.get(key);
+    if(!prev || Number(user.updatedAt || 0) > Number(prev.updatedAt || 0)){
+      map.set(key, user);
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => {
+    const aSelf = normalizeRoleEmail(a.email) === normalizeRoleEmail(currentUserEmail) ? 1 : 0;
+    const bSelf = normalizeRoleEmail(b.email) === normalizeRoleEmail(currentUserEmail) ? 1 : 0;
+    if(aSelf !== bSelf) return bSelf - aSelf;
+    return String(a.username || a.email || '').localeCompare(String(b.username || b.email || ''), 'pt', { sensitivity:'base' });
+  });
+}
 function renderOnlineUsersCard(){
   const list = $('onlineUsersList');
   const count = $('onlineUsersCount');
   const widget = $('onlineUsersWidget');
+  const users = getRenderableOnlineUsers();
   if(widget) widget.classList.toggle('hidden', !currentUsername);
-  if(count) count.textContent = String(onlineUsersCache.length || 0);
+  if(count) count.textContent = String(users.length || 0);
   if(!list) return;
-  if(!onlineUsersCache.length){
+  if(!users.length){
     list.innerHTML = '<div class="online-empty">Sem utilizadores online neste momento.</div>';
     return;
   }
-  list.innerHTML = onlineUsersCache.map(user => {
+  list.innerHTML = users.map(user => {
     const you = normalizeRoleEmail(user.email) === normalizeRoleEmail(currentUserEmail) ? ' (Tu)' : '';
     const email = escapeHtml(user.email || '-');
     const name = escapeHtml((user.username || user.email || 'Utilizador') + you);
     const role = escapeHtml(roleLabel(user.role));
-    return `<div class="online-user-item"><div class="online-user-main"><span class="online-dot"></span><div class="online-user-meta"><div class="online-user-name">${name}</div><div class="online-user-sub">${email}</div></div></div><span class="online-role-pill">${role}</span></div>`;
+    const seen = user.updatedAt ? `Ativo agora • ${new Date(Number(user.updatedAt)).toLocaleTimeString('pt-PT', { hour:'2-digit', minute:'2-digit' })}` : 'Ativo agora';
+    return `<div class="online-user-item"><div class="online-user-main"><span class="online-dot"></span><div class="online-user-meta"><div class="online-user-name">${name}</div><div class="online-user-sub">${email}<br>${escapeHtml(seen)}</div></div></div><span class="online-role-pill">${role}</span></div>`;
   }).join('');
 }
 async function updatePresenceState(isOnline = true){
@@ -3879,10 +3953,11 @@ function bindPresenceVisibility(){
   });
   window.addEventListener('beforeunload', () => {
     if(!currentUsername) return;
+    updatePresenceState(false);
     try{
       const currentUser = firebaseAuth?.currentUser;
       const email = normalizeRoleEmail(currentUser?.email || currentUserEmail);
-      const payload = JSON.stringify({ email: email || '', username: String(currentUsername || ''), role: normalizeRoleValue(currentRole || 'user'), isOnline:false, updatedAt: Date.now() });
+      const payload = JSON.stringify({ email: email || '', username: String(currentUsername || ''), role: normalizeRoleValue(currentRole || 'user'), isOnline:false, updatedAt: Date.now(), sessionId:getPresenceSessionId() });
       localStorage.setItem('ge_presence_fallback', payload);
     }catch(e){}
   });
@@ -3892,16 +3967,20 @@ function startPresenceTracking(){
   initOnlineUsersUi();
   bindPresenceVisibility();
   stopPresenceTracking();
+  onlineUsersCache = [{
+    id: normalizePresenceId(),
+    email: normalizeRoleEmail(currentUserEmail || firebaseAuth?.currentUser?.email) || '',
+    username: String(currentUsername || 'Utilizador'),
+    role: normalizeRoleValue(currentRole || 'user'),
+    isOnline: true,
+    updatedAt: Date.now(),
+    optimistic: true
+  }];
+  renderOnlineUsersCard();
   presenceUnsub = onSnapshot(collection(firestoreDb, PRESENCE_COLLECTION), snap => {
     const now = Date.now();
     onlineUsersCache = snap.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() || {}) }))
-      .filter(item => item && item.isOnline !== false && (now - Number(item.updatedAt || 0)) <= PRESENCE_TIMEOUT_MS)
-      .sort((a, b) => {
-        const aSelf = normalizeRoleEmail(a.email) === normalizeRoleEmail(currentUserEmail) ? 1 : 0;
-        const bSelf = normalizeRoleEmail(b.email) === normalizeRoleEmail(currentUserEmail) ? 1 : 0;
-        if(aSelf !== bSelf) return bSelf - aSelf;
-        return String(a.username || a.email || '').localeCompare(String(b.username || b.email || ''), 'pt', { sensitivity:'base' });
-      });
+      .filter(item => item && item.isOnline !== false && (now - Number(item.updatedAt || 0)) <= PRESENCE_TIMEOUT_MS);
     renderOnlineUsersCard();
   }, err => console.warn('Não foi possível ler utilizadores online:', err));
   updatePresenceState(true);
