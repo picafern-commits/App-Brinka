@@ -3454,44 +3454,54 @@ async function importBackupDataObject(data){
 
   try{ if(typeof clearRealtimeListeners === 'function') clearRealtimeListeners(); }catch(e){}
 
-  trabalhos = novosTrabalhos;
-  clientes = novosClientes;
-  pagamentos = novosPagamentos;
-  window.trabalhos = novosTrabalhos;
-  window.clientes = novosClientes;
-  window.pagamentos = novosPagamentos;
+  trabalhos = novosTrabalhos.map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape({ ...item }) : { ...item });
+  clientes = novosClientes.map(item => ({ ...item }));
+  pagamentos = novosPagamentos.map(item => ({ ...item }));
+  window.trabalhos = trabalhos;
+  window.clientes = clientes;
+  window.pagamentos = pagamentos;
 
-  localStorage.setItem(keys.trabalhos, JSON.stringify(novosTrabalhos));
-  localStorage.setItem(keys.clientes, JSON.stringify(novosClientes));
-  localStorage.setItem(keys.pagamentos, JSON.stringify(novosPagamentos));
-  localStorage.setItem('trabalhos', JSON.stringify(novosTrabalhos));
-  localStorage.setItem('clientes', JSON.stringify(novosClientes));
-  localStorage.setItem('pagamentos', JSON.stringify(novosPagamentos));
+  localStorage.setItem(keys.trabalhos, JSON.stringify(trabalhos));
+  localStorage.setItem(keys.clientes, JSON.stringify(clientes));
+  localStorage.setItem(keys.pagamentos, JSON.stringify(pagamentos));
+  localStorage.setItem('trabalhos', JSON.stringify(trabalhos));
+  localStorage.setItem('clientes', JSON.stringify(clientes));
+  localStorage.setItem('pagamentos', JSON.stringify(pagamentos));
 
-  recalcLastTrabIdFromList(novosTrabalhos);
+  recalcLastTrabIdFromList(trabalhos);
   try{ if(typeof saveLocal === 'function') saveLocal(); }catch(e){}
+  try{ if(typeof renderAll === 'function') renderAll(); }catch(e){}
   try{ if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); }catch(e){}
 
   let remoteSummary = '';
+  let syncOk = false;
   try{
-    const trabSync = await syncBackupCollectionToFirebase('trabalhos', novosTrabalhos);
-    const cliSync = await syncBackupCollectionToFirebase('clientes', novosClientes);
-    const pagSync = await syncBackupCollectionToFirebase('pagamentos', novosPagamentos);
+    const trabSync = await syncBackupCollectionToFirebase('trabalhos', trabalhos);
+    const cliSync = await syncBackupCollectionToFirebase('clientes', clientes);
+    const pagSync = await syncBackupCollectionToFirebase('pagamentos', pagamentos);
     remoteSummary = ` Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
+    syncOk = true;
   }catch(err){
     console.error('Erro ao sincronizar backup para Firebase:', err);
     remoteSummary = ' Importado localmente, mas houve erro a sincronizar com a Firebase.';
   }
 
-  try{ if(typeof attachRealtimeListeners === 'function') attachRealtimeListeners(); }catch(e){}
+  try{ if(typeof renderAll === 'function') renderAll(); }catch(e){}
   try{ if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); }catch(e){}
-  try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
-  try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
-  try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
-  try { if(typeof renderDashboard === 'function') renderDashboard(); } catch(e){}
-  try { if(typeof renderRelatorios === 'function') { renderRelatorios(); try{ renderAdvancedReports(); }catch(e){} } } catch(e){}
 
-  alert(`Backup importado com sucesso. Trabalhos: ${novosTrabalhos.length}, Clientes: ${novosClientes.length}, Pagamentos: ${novosPagamentos.length}.${remoteSummary}`);
+  const activePage = document.querySelector('.page.active');
+  const activeTab = activePage ? activePage.id.replace(/-page$/, '') : (sessionStorage.getItem('gestao:lastTab') || 'dashboard');
+  try{ sessionStorage.setItem('gestao:lastTab', activeTab); }catch(e){}
+
+  alert(`Backup importado com sucesso. Trabalhos: ${trabalhos.length}, Clientes: ${clientes.length}, Pagamentos: ${pagamentos.length}.${remoteSummary}`);
+
+  if(syncOk){
+    setTimeout(() => {
+      try{ window.location.reload(); }catch(e){ try{ location.reload(); }catch(_){} }
+    }, 250);
+  }else{
+    try{ if(typeof attachRealtimeListeners === 'function') attachRealtimeListeners(); }catch(e){}
+  }
 }
 
 function importBackupFile(event){
