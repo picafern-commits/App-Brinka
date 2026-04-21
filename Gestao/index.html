@@ -3918,15 +3918,11 @@ function buildProfessionalReportHtml(){
         <tbody>${historyHtml}</tbody>
       </table>
     
-<style id="device-permissions-style">
+<style id="safe-device-permissions-style">
 .permissions-admin-card{
-  margin-top:20px;
-  background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
-  border:1px solid rgba(114,137,218,.18);
-  border-radius:22px;
-  padding:20px;
-  color:#fff;
-  box-shadow:0 10px 35px rgba(0,0,0,.18);
+  margin-top:20px;background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
+  border:1px solid rgba(114,137,218,.18);border-radius:22px;padding:20px;color:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.18)
 }
 .permissions-admin-card h3{margin:0 0 6px 0;font-size:28px}
 .permissions-admin-card p{margin:0 0 14px 0;color:rgba(255,255,255,.72)}
@@ -3954,18 +3950,19 @@ function buildProfessionalReportHtml(){
   color:#fcd34d;border:1px solid rgba(245,158,11,.32);backdrop-filter:blur(8px);
   padding:12px 16px;border-radius:16px;font-weight:700
 }
-@media (max-width: 980px){
-  .permissions-admin-grid{grid-template-columns:1fr}
-}
+@media (max-width: 980px){.permissions-admin-grid{grid-template-columns:1fr}}
 </style>
 
-<script id="device-permissions-script">
+<script id="safe-device-permissions-script">
 (function(){
-  const LS_KEY = "device_permissions_cache_v1";
+  const LS_KEY = "device_permissions_cache_v2";
   const COLL = "user_permissions";
   const DEVICE = /mobile|android|iphone|ipad/i.test(navigator.userAgent) || window.location.pathname.toLowerCase().includes("mobile")
     ? "mobile" : "computador";
 
+  function makeId(email, device){
+    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  }
   function getCurrentRole(){
     return (window.currentRole || localStorage.getItem("currentRole") || localStorage.getItem("ge_current_role") || "").toLowerCase();
   }
@@ -3984,41 +3981,27 @@ function buildProfessionalReportHtml(){
   function setCache(rows){
     localStorage.setItem(LS_KEY, JSON.stringify(rows || []));
   }
-  function makeId(email, device){
-    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  function loginVisible(){
+    const pw = document.querySelector('input[type="password"]');
+    if (pw && pw.offsetParent !== null) return true;
+    const loginButton = [...document.querySelectorAll("button")].find(b => /entrar|login/i.test((b.textContent||"").trim()));
+    return !!(loginButton && loginButton.offsetParent !== null);
   }
-  function findPermission(email, device){
-    const rows = getCache();
-    return rows.find(r => makeId(r.email, r.device) === makeId(email, device)) || null;
-  }
-  function applyReadOnlyMode(active){
-    const existing = document.getElementById("readonly-lock-banner");
-    if (existing) existing.remove();
-    if (!active) return;
-    const selectors = [
-      "button",
-      "input",
-      "textarea",
-      "select",
-      "[contenteditable='true']"
-    ];
-    document.querySelectorAll(selectors.join(",")).forEach(el => {
-      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
-      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
-      if (keep) return;
-      if (el.closest("#device-permissions-admin-card")) return;
-      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
-        el.setAttribute("disabled","disabled");
-      } else {
-        el.style.pointerEvents = "none";
-        el.style.opacity = "0.6";
-      }
+  function appVisible(){
+    const appCandidates = [...document.querySelectorAll("#app,.app,main,.main-content,.content,.app-content")];
+    if (!appCandidates.length) return !loginVisible();
+    return appCandidates.some(el => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && el.offsetParent !== null;
     });
-    const banner = document.createElement("div");
-    banner.id = "readonly-lock-banner";
-    banner.className = "readonly-lock";
-    banner.textContent = "Modo Só Ver ativo neste dispositivo";
-    document.body.appendChild(banner);
+  }
+  function canBootPermissions(){
+    return !loginVisible() && appVisible();
+  }
+  function badgeHtml(mode){
+    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
+    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
+    return '<span class="permissions-admin-badge none">Sem acesso</span>';
   }
   async function fetchPermissions(){
     if (!(window.firestoreDb && window.getDocs && window.collection)) return getCache();
@@ -4044,7 +4027,6 @@ function buildProfessionalReportHtml(){
         console.warn("Permissões: não consegui gravar na Firebase", err);
       }
     }
-    return row;
   }
   async function deletePermission(email, device){
     const rows = getCache().filter(r => makeId(r.email, r.device) !== makeId(email, device));
@@ -4057,19 +4039,41 @@ function buildProfessionalReportHtml(){
       }
     }
   }
-  function badgeHtml(mode){
-    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
-    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
-    return '<span class="permissions-admin-badge none">Sem acesso</span>';
+  function applyReadOnlyMode(active){
+    const existing = document.getElementById("readonly-lock-banner");
+    if (existing) existing.remove();
+    if (!active || !canBootPermissions()) return;
+    const selectors = ["button","input","textarea","select","[contenteditable='true']"];
+    document.querySelectorAll(selectors.join(",")).forEach(el => {
+      if (el.closest("#device-permissions-admin-card")) return;
+      if (el.matches('input[type="password"]')) return;
+      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
+      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
+      if (keep) return;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
+        el.disabled = true;
+      } else {
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.6";
+      }
+    });
+    const banner = document.createElement("div");
+    banner.id = "readonly-lock-banner";
+    banner.className = "readonly-lock";
+    banner.textContent = "Modo Só Ver ativo neste dispositivo";
+    document.body.appendChild(banner);
   }
   async function renderAdminPanel(){
     const role = getCurrentRole();
     if (!(role.includes("master") || role.includes("admin mestre") || role === "master_admin")) return;
+    if (!canBootPermissions()) return;
     if (document.getElementById("device-permissions-admin-card")) return;
+
     const anchor =
       [...document.querySelectorAll("h1,h2,h3,.section-title,.card-title")].find(el => /backup|configura/i.test(el.textContent || ""))?.closest("section,div,article")
       || document.querySelector("main, .main-content, .page-content, .content, .app-content")
       || document.body;
+
     const card = document.createElement("div");
     card.className = "permissions-admin-card";
     card.id = "device-permissions-admin-card";
@@ -4114,10 +4118,7 @@ function buildProfessionalReportHtml(){
         return;
       }
       await savePermission({
-        nome,
-        email,
-        device,
-        mode,
+        nome, email, device, mode,
         podeMexer: mode === "edit",
         soVer: mode === "view",
         updatedAt: new Date().toISOString(),
@@ -4163,6 +4164,7 @@ function buildProfessionalReportHtml(){
   }
 
   async function applyCurrentDevicePermission(){
+    if (!canBootPermissions()) return;
     const email = getCurrentEmail();
     if (!email) return;
     const rows = await fetchPermissions();
@@ -4172,14 +4174,24 @@ function buildProfessionalReportHtml(){
     applyReadOnlyMode(mode === "view");
   }
 
-  window.__devicePermissionsBoot = async function(){
+  async function bootSafePermissions(){
+    if (!canBootPermissions()) return;
     await renderAdminPanel();
     await applyCurrentDevicePermission();
-  };
+  }
 
-  window.addEventListener("load", () => setTimeout(window.__devicePermissionsBoot, 1400));
+  let tries = 0;
+  const interval = setInterval(async () => {
+    tries += 1;
+    if (canBootPermissions()) {
+      await bootSafePermissions();
+      clearInterval(interval);
+    }
+    if (tries > 30) clearInterval(interval);
+  }, 1000);
+
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) setTimeout(window.__devicePermissionsBoot, 600);
+    if (!document.hidden) setTimeout(bootSafePermissions, 600);
   });
 })();
 </script>
@@ -4211,12 +4223,12 @@ function printProfessionalReport(){
 </script>
   <script type="module">
 const firebaseConfig = {
-  apiKey: "AIzaSyDbiMRCFhD9WC4Z17fc9M9uXdY8ETUO05Q",
-  authDomain: "app-pai-feb73.firebaseapp.com",
-  projectId: "app-pai-feb73",
-  storageBucket: "app-pai-feb73.firebasestorage.app",
-  messagingSenderId: "594270955224",
-  appId: "1:594270955224:web:85d1d530889704d0f359ad"
+  apiKey: "AIzaSyD2nCoO5TP56H_gm5SBWM6DLf_SZW1UPxI",
+  authDomain: "app-gestao-c932d.firebaseapp.com",
+  projectId: "app-gestao-c932d",
+  storageBucket: "app-gestao-c932d.firebasestorage.app",
+  messagingSenderId: "318015040210",
+  appId: "1:318015040210:web:e3070e6b8f4d74a8799b0b"
 };
 
 
@@ -6498,15 +6510,11 @@ td.acoes-col, .acoes-col{
 }
 
 </style></head><body>${bodyHtml}
-<style id="device-permissions-style">
+<style id="safe-device-permissions-style">
 .permissions-admin-card{
-  margin-top:20px;
-  background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
-  border:1px solid rgba(114,137,218,.18);
-  border-radius:22px;
-  padding:20px;
-  color:#fff;
-  box-shadow:0 10px 35px rgba(0,0,0,.18);
+  margin-top:20px;background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
+  border:1px solid rgba(114,137,218,.18);border-radius:22px;padding:20px;color:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.18)
 }
 .permissions-admin-card h3{margin:0 0 6px 0;font-size:28px}
 .permissions-admin-card p{margin:0 0 14px 0;color:rgba(255,255,255,.72)}
@@ -6534,18 +6542,19 @@ td.acoes-col, .acoes-col{
   color:#fcd34d;border:1px solid rgba(245,158,11,.32);backdrop-filter:blur(8px);
   padding:12px 16px;border-radius:16px;font-weight:700
 }
-@media (max-width: 980px){
-  .permissions-admin-grid{grid-template-columns:1fr}
-}
+@media (max-width: 980px){.permissions-admin-grid{grid-template-columns:1fr}}
 </style>
 
-<script id="device-permissions-script">
+<script id="safe-device-permissions-script">
 (function(){
-  const LS_KEY = "device_permissions_cache_v1";
+  const LS_KEY = "device_permissions_cache_v2";
   const COLL = "user_permissions";
   const DEVICE = /mobile|android|iphone|ipad/i.test(navigator.userAgent) || window.location.pathname.toLowerCase().includes("mobile")
     ? "mobile" : "computador";
 
+  function makeId(email, device){
+    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  }
   function getCurrentRole(){
     return (window.currentRole || localStorage.getItem("currentRole") || localStorage.getItem("ge_current_role") || "").toLowerCase();
   }
@@ -6564,41 +6573,27 @@ td.acoes-col, .acoes-col{
   function setCache(rows){
     localStorage.setItem(LS_KEY, JSON.stringify(rows || []));
   }
-  function makeId(email, device){
-    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  function loginVisible(){
+    const pw = document.querySelector('input[type="password"]');
+    if (pw && pw.offsetParent !== null) return true;
+    const loginButton = [...document.querySelectorAll("button")].find(b => /entrar|login/i.test((b.textContent||"").trim()));
+    return !!(loginButton && loginButton.offsetParent !== null);
   }
-  function findPermission(email, device){
-    const rows = getCache();
-    return rows.find(r => makeId(r.email, r.device) === makeId(email, device)) || null;
-  }
-  function applyReadOnlyMode(active){
-    const existing = document.getElementById("readonly-lock-banner");
-    if (existing) existing.remove();
-    if (!active) return;
-    const selectors = [
-      "button",
-      "input",
-      "textarea",
-      "select",
-      "[contenteditable='true']"
-    ];
-    document.querySelectorAll(selectors.join(",")).forEach(el => {
-      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
-      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
-      if (keep) return;
-      if (el.closest("#device-permissions-admin-card")) return;
-      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
-        el.setAttribute("disabled","disabled");
-      } else {
-        el.style.pointerEvents = "none";
-        el.style.opacity = "0.6";
-      }
+  function appVisible(){
+    const appCandidates = [...document.querySelectorAll("#app,.app,main,.main-content,.content,.app-content")];
+    if (!appCandidates.length) return !loginVisible();
+    return appCandidates.some(el => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && el.offsetParent !== null;
     });
-    const banner = document.createElement("div");
-    banner.id = "readonly-lock-banner";
-    banner.className = "readonly-lock";
-    banner.textContent = "Modo Só Ver ativo neste dispositivo";
-    document.body.appendChild(banner);
+  }
+  function canBootPermissions(){
+    return !loginVisible() && appVisible();
+  }
+  function badgeHtml(mode){
+    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
+    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
+    return '<span class="permissions-admin-badge none">Sem acesso</span>';
   }
   async function fetchPermissions(){
     if (!(window.firestoreDb && window.getDocs && window.collection)) return getCache();
@@ -6624,7 +6619,6 @@ td.acoes-col, .acoes-col{
         console.warn("Permissões: não consegui gravar na Firebase", err);
       }
     }
-    return row;
   }
   async function deletePermission(email, device){
     const rows = getCache().filter(r => makeId(r.email, r.device) !== makeId(email, device));
@@ -6637,19 +6631,41 @@ td.acoes-col, .acoes-col{
       }
     }
   }
-  function badgeHtml(mode){
-    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
-    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
-    return '<span class="permissions-admin-badge none">Sem acesso</span>';
+  function applyReadOnlyMode(active){
+    const existing = document.getElementById("readonly-lock-banner");
+    if (existing) existing.remove();
+    if (!active || !canBootPermissions()) return;
+    const selectors = ["button","input","textarea","select","[contenteditable='true']"];
+    document.querySelectorAll(selectors.join(",")).forEach(el => {
+      if (el.closest("#device-permissions-admin-card")) return;
+      if (el.matches('input[type="password"]')) return;
+      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
+      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
+      if (keep) return;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
+        el.disabled = true;
+      } else {
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.6";
+      }
+    });
+    const banner = document.createElement("div");
+    banner.id = "readonly-lock-banner";
+    banner.className = "readonly-lock";
+    banner.textContent = "Modo Só Ver ativo neste dispositivo";
+    document.body.appendChild(banner);
   }
   async function renderAdminPanel(){
     const role = getCurrentRole();
     if (!(role.includes("master") || role.includes("admin mestre") || role === "master_admin")) return;
+    if (!canBootPermissions()) return;
     if (document.getElementById("device-permissions-admin-card")) return;
+
     const anchor =
       [...document.querySelectorAll("h1,h2,h3,.section-title,.card-title")].find(el => /backup|configura/i.test(el.textContent || ""))?.closest("section,div,article")
       || document.querySelector("main, .main-content, .page-content, .content, .app-content")
       || document.body;
+
     const card = document.createElement("div");
     card.className = "permissions-admin-card";
     card.id = "device-permissions-admin-card";
@@ -6694,10 +6710,7 @@ td.acoes-col, .acoes-col{
         return;
       }
       await savePermission({
-        nome,
-        email,
-        device,
-        mode,
+        nome, email, device, mode,
         podeMexer: mode === "edit",
         soVer: mode === "view",
         updatedAt: new Date().toISOString(),
@@ -6743,6 +6756,7 @@ td.acoes-col, .acoes-col{
   }
 
   async function applyCurrentDevicePermission(){
+    if (!canBootPermissions()) return;
     const email = getCurrentEmail();
     if (!email) return;
     const rows = await fetchPermissions();
@@ -6752,14 +6766,24 @@ td.acoes-col, .acoes-col{
     applyReadOnlyMode(mode === "view");
   }
 
-  window.__devicePermissionsBoot = async function(){
+  async function bootSafePermissions(){
+    if (!canBootPermissions()) return;
     await renderAdminPanel();
     await applyCurrentDevicePermission();
-  };
+  }
 
-  window.addEventListener("load", () => setTimeout(window.__devicePermissionsBoot, 1400));
+  let tries = 0;
+  const interval = setInterval(async () => {
+    tries += 1;
+    if (canBootPermissions()) {
+      await bootSafePermissions();
+      clearInterval(interval);
+    }
+    if (tries > 30) clearInterval(interval);
+  }, 1000);
+
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) setTimeout(window.__devicePermissionsBoot, 600);
+    if (!document.hidden) setTimeout(bootSafePermissions, 600);
   });
 })();
 </script>
@@ -8239,15 +8263,11 @@ function buildProfessionalReportHtml(){
         <tbody>${historyHtml}</tbody>
       </table>
     
-<style id="device-permissions-style">
+<style id="safe-device-permissions-style">
 .permissions-admin-card{
-  margin-top:20px;
-  background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
-  border:1px solid rgba(114,137,218,.18);
-  border-radius:22px;
-  padding:20px;
-  color:#fff;
-  box-shadow:0 10px 35px rgba(0,0,0,.18);
+  margin-top:20px;background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
+  border:1px solid rgba(114,137,218,.18);border-radius:22px;padding:20px;color:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.18)
 }
 .permissions-admin-card h3{margin:0 0 6px 0;font-size:28px}
 .permissions-admin-card p{margin:0 0 14px 0;color:rgba(255,255,255,.72)}
@@ -8275,18 +8295,19 @@ function buildProfessionalReportHtml(){
   color:#fcd34d;border:1px solid rgba(245,158,11,.32);backdrop-filter:blur(8px);
   padding:12px 16px;border-radius:16px;font-weight:700
 }
-@media (max-width: 980px){
-  .permissions-admin-grid{grid-template-columns:1fr}
-}
+@media (max-width: 980px){.permissions-admin-grid{grid-template-columns:1fr}}
 </style>
 
-<script id="device-permissions-script">
+<script id="safe-device-permissions-script">
 (function(){
-  const LS_KEY = "device_permissions_cache_v1";
+  const LS_KEY = "device_permissions_cache_v2";
   const COLL = "user_permissions";
   const DEVICE = /mobile|android|iphone|ipad/i.test(navigator.userAgent) || window.location.pathname.toLowerCase().includes("mobile")
     ? "mobile" : "computador";
 
+  function makeId(email, device){
+    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  }
   function getCurrentRole(){
     return (window.currentRole || localStorage.getItem("currentRole") || localStorage.getItem("ge_current_role") || "").toLowerCase();
   }
@@ -8305,41 +8326,27 @@ function buildProfessionalReportHtml(){
   function setCache(rows){
     localStorage.setItem(LS_KEY, JSON.stringify(rows || []));
   }
-  function makeId(email, device){
-    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  function loginVisible(){
+    const pw = document.querySelector('input[type="password"]');
+    if (pw && pw.offsetParent !== null) return true;
+    const loginButton = [...document.querySelectorAll("button")].find(b => /entrar|login/i.test((b.textContent||"").trim()));
+    return !!(loginButton && loginButton.offsetParent !== null);
   }
-  function findPermission(email, device){
-    const rows = getCache();
-    return rows.find(r => makeId(r.email, r.device) === makeId(email, device)) || null;
-  }
-  function applyReadOnlyMode(active){
-    const existing = document.getElementById("readonly-lock-banner");
-    if (existing) existing.remove();
-    if (!active) return;
-    const selectors = [
-      "button",
-      "input",
-      "textarea",
-      "select",
-      "[contenteditable='true']"
-    ];
-    document.querySelectorAll(selectors.join(",")).forEach(el => {
-      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
-      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
-      if (keep) return;
-      if (el.closest("#device-permissions-admin-card")) return;
-      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
-        el.setAttribute("disabled","disabled");
-      } else {
-        el.style.pointerEvents = "none";
-        el.style.opacity = "0.6";
-      }
+  function appVisible(){
+    const appCandidates = [...document.querySelectorAll("#app,.app,main,.main-content,.content,.app-content")];
+    if (!appCandidates.length) return !loginVisible();
+    return appCandidates.some(el => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && el.offsetParent !== null;
     });
-    const banner = document.createElement("div");
-    banner.id = "readonly-lock-banner";
-    banner.className = "readonly-lock";
-    banner.textContent = "Modo Só Ver ativo neste dispositivo";
-    document.body.appendChild(banner);
+  }
+  function canBootPermissions(){
+    return !loginVisible() && appVisible();
+  }
+  function badgeHtml(mode){
+    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
+    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
+    return '<span class="permissions-admin-badge none">Sem acesso</span>';
   }
   async function fetchPermissions(){
     if (!(window.firestoreDb && window.getDocs && window.collection)) return getCache();
@@ -8365,7 +8372,6 @@ function buildProfessionalReportHtml(){
         console.warn("Permissões: não consegui gravar na Firebase", err);
       }
     }
-    return row;
   }
   async function deletePermission(email, device){
     const rows = getCache().filter(r => makeId(r.email, r.device) !== makeId(email, device));
@@ -8378,19 +8384,41 @@ function buildProfessionalReportHtml(){
       }
     }
   }
-  function badgeHtml(mode){
-    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
-    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
-    return '<span class="permissions-admin-badge none">Sem acesso</span>';
+  function applyReadOnlyMode(active){
+    const existing = document.getElementById("readonly-lock-banner");
+    if (existing) existing.remove();
+    if (!active || !canBootPermissions()) return;
+    const selectors = ["button","input","textarea","select","[contenteditable='true']"];
+    document.querySelectorAll(selectors.join(",")).forEach(el => {
+      if (el.closest("#device-permissions-admin-card")) return;
+      if (el.matches('input[type="password"]')) return;
+      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
+      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
+      if (keep) return;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
+        el.disabled = true;
+      } else {
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.6";
+      }
+    });
+    const banner = document.createElement("div");
+    banner.id = "readonly-lock-banner";
+    banner.className = "readonly-lock";
+    banner.textContent = "Modo Só Ver ativo neste dispositivo";
+    document.body.appendChild(banner);
   }
   async function renderAdminPanel(){
     const role = getCurrentRole();
     if (!(role.includes("master") || role.includes("admin mestre") || role === "master_admin")) return;
+    if (!canBootPermissions()) return;
     if (document.getElementById("device-permissions-admin-card")) return;
+
     const anchor =
       [...document.querySelectorAll("h1,h2,h3,.section-title,.card-title")].find(el => /backup|configura/i.test(el.textContent || ""))?.closest("section,div,article")
       || document.querySelector("main, .main-content, .page-content, .content, .app-content")
       || document.body;
+
     const card = document.createElement("div");
     card.className = "permissions-admin-card";
     card.id = "device-permissions-admin-card";
@@ -8435,10 +8463,7 @@ function buildProfessionalReportHtml(){
         return;
       }
       await savePermission({
-        nome,
-        email,
-        device,
-        mode,
+        nome, email, device, mode,
         podeMexer: mode === "edit",
         soVer: mode === "view",
         updatedAt: new Date().toISOString(),
@@ -8484,6 +8509,7 @@ function buildProfessionalReportHtml(){
   }
 
   async function applyCurrentDevicePermission(){
+    if (!canBootPermissions()) return;
     const email = getCurrentEmail();
     if (!email) return;
     const rows = await fetchPermissions();
@@ -8493,14 +8519,24 @@ function buildProfessionalReportHtml(){
     applyReadOnlyMode(mode === "view");
   }
 
-  window.__devicePermissionsBoot = async function(){
+  async function bootSafePermissions(){
+    if (!canBootPermissions()) return;
     await renderAdminPanel();
     await applyCurrentDevicePermission();
-  };
+  }
 
-  window.addEventListener("load", () => setTimeout(window.__devicePermissionsBoot, 1400));
+  let tries = 0;
+  const interval = setInterval(async () => {
+    tries += 1;
+    if (canBootPermissions()) {
+      await bootSafePermissions();
+      clearInterval(interval);
+    }
+    if (tries > 30) clearInterval(interval);
+  }, 1000);
+
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) setTimeout(window.__devicePermissionsBoot, 600);
+    if (!document.hidden) setTimeout(bootSafePermissions, 600);
   });
 })();
 </script>
@@ -8586,15 +8622,11 @@ function printProfessionalReport(){
   </div>
 
 
-<style id="device-permissions-style">
+<style id="safe-device-permissions-style">
 .permissions-admin-card{
-  margin-top:20px;
-  background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
-  border:1px solid rgba(114,137,218,.18);
-  border-radius:22px;
-  padding:20px;
-  color:#fff;
-  box-shadow:0 10px 35px rgba(0,0,0,.18);
+  margin-top:20px;background:linear-gradient(180deg, rgba(21,30,60,.92), rgba(13,20,42,.92));
+  border:1px solid rgba(114,137,218,.18);border-radius:22px;padding:20px;color:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.18)
 }
 .permissions-admin-card h3{margin:0 0 6px 0;font-size:28px}
 .permissions-admin-card p{margin:0 0 14px 0;color:rgba(255,255,255,.72)}
@@ -8622,18 +8654,19 @@ function printProfessionalReport(){
   color:#fcd34d;border:1px solid rgba(245,158,11,.32);backdrop-filter:blur(8px);
   padding:12px 16px;border-radius:16px;font-weight:700
 }
-@media (max-width: 980px){
-  .permissions-admin-grid{grid-template-columns:1fr}
-}
+@media (max-width: 980px){.permissions-admin-grid{grid-template-columns:1fr}}
 </style>
 
-<script id="device-permissions-script">
+<script id="safe-device-permissions-script">
 (function(){
-  const LS_KEY = "device_permissions_cache_v1";
+  const LS_KEY = "device_permissions_cache_v2";
   const COLL = "user_permissions";
   const DEVICE = /mobile|android|iphone|ipad/i.test(navigator.userAgent) || window.location.pathname.toLowerCase().includes("mobile")
     ? "mobile" : "computador";
 
+  function makeId(email, device){
+    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  }
   function getCurrentRole(){
     return (window.currentRole || localStorage.getItem("currentRole") || localStorage.getItem("ge_current_role") || "").toLowerCase();
   }
@@ -8652,41 +8685,27 @@ function printProfessionalReport(){
   function setCache(rows){
     localStorage.setItem(LS_KEY, JSON.stringify(rows || []));
   }
-  function makeId(email, device){
-    return `${(email||"").toLowerCase().trim()}__${(device||"").toLowerCase().trim()}`;
+  function loginVisible(){
+    const pw = document.querySelector('input[type="password"]');
+    if (pw && pw.offsetParent !== null) return true;
+    const loginButton = [...document.querySelectorAll("button")].find(b => /entrar|login/i.test((b.textContent||"").trim()));
+    return !!(loginButton && loginButton.offsetParent !== null);
   }
-  function findPermission(email, device){
-    const rows = getCache();
-    return rows.find(r => makeId(r.email, r.device) === makeId(email, device)) || null;
-  }
-  function applyReadOnlyMode(active){
-    const existing = document.getElementById("readonly-lock-banner");
-    if (existing) existing.remove();
-    if (!active) return;
-    const selectors = [
-      "button",
-      "input",
-      "textarea",
-      "select",
-      "[contenteditable='true']"
-    ];
-    document.querySelectorAll(selectors.join(",")).forEach(el => {
-      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
-      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
-      if (keep) return;
-      if (el.closest("#device-permissions-admin-card")) return;
-      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
-        el.setAttribute("disabled","disabled");
-      } else {
-        el.style.pointerEvents = "none";
-        el.style.opacity = "0.6";
-      }
+  function appVisible(){
+    const appCandidates = [...document.querySelectorAll("#app,.app,main,.main-content,.content,.app-content")];
+    if (!appCandidates.length) return !loginVisible();
+    return appCandidates.some(el => {
+      const style = getComputedStyle(el);
+      return style.display !== "none" && style.visibility !== "hidden" && el.offsetParent !== null;
     });
-    const banner = document.createElement("div");
-    banner.id = "readonly-lock-banner";
-    banner.className = "readonly-lock";
-    banner.textContent = "Modo Só Ver ativo neste dispositivo";
-    document.body.appendChild(banner);
+  }
+  function canBootPermissions(){
+    return !loginVisible() && appVisible();
+  }
+  function badgeHtml(mode){
+    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
+    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
+    return '<span class="permissions-admin-badge none">Sem acesso</span>';
   }
   async function fetchPermissions(){
     if (!(window.firestoreDb && window.getDocs && window.collection)) return getCache();
@@ -8712,7 +8731,6 @@ function printProfessionalReport(){
         console.warn("Permissões: não consegui gravar na Firebase", err);
       }
     }
-    return row;
   }
   async function deletePermission(email, device){
     const rows = getCache().filter(r => makeId(r.email, r.device) !== makeId(email, device));
@@ -8725,19 +8743,41 @@ function printProfessionalReport(){
       }
     }
   }
-  function badgeHtml(mode){
-    if (mode === "edit") return '<span class="permissions-admin-badge edit">Pode mexer</span>';
-    if (mode === "view") return '<span class="permissions-admin-badge view">Só ver</span>';
-    return '<span class="permissions-admin-badge none">Sem acesso</span>';
+  function applyReadOnlyMode(active){
+    const existing = document.getElementById("readonly-lock-banner");
+    if (existing) existing.remove();
+    if (!active || !canBootPermissions()) return;
+    const selectors = ["button","input","textarea","select","[contenteditable='true']"];
+    document.querySelectorAll(selectors.join(",")).forEach(el => {
+      if (el.closest("#device-permissions-admin-card")) return;
+      if (el.matches('input[type="password"]')) return;
+      const text = ((el.innerText || el.value || el.textContent || "") + "").toLowerCase();
+      const keep = text.includes("terminar sessão") || text.includes("logout") || text.includes("sair") || text.includes("fechar");
+      if (keep) return;
+      if (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT") {
+        el.disabled = true;
+      } else {
+        el.style.pointerEvents = "none";
+        el.style.opacity = "0.6";
+      }
+    });
+    const banner = document.createElement("div");
+    banner.id = "readonly-lock-banner";
+    banner.className = "readonly-lock";
+    banner.textContent = "Modo Só Ver ativo neste dispositivo";
+    document.body.appendChild(banner);
   }
   async function renderAdminPanel(){
     const role = getCurrentRole();
     if (!(role.includes("master") || role.includes("admin mestre") || role === "master_admin")) return;
+    if (!canBootPermissions()) return;
     if (document.getElementById("device-permissions-admin-card")) return;
+
     const anchor =
       [...document.querySelectorAll("h1,h2,h3,.section-title,.card-title")].find(el => /backup|configura/i.test(el.textContent || ""))?.closest("section,div,article")
       || document.querySelector("main, .main-content, .page-content, .content, .app-content")
       || document.body;
+
     const card = document.createElement("div");
     card.className = "permissions-admin-card";
     card.id = "device-permissions-admin-card";
@@ -8782,10 +8822,7 @@ function printProfessionalReport(){
         return;
       }
       await savePermission({
-        nome,
-        email,
-        device,
-        mode,
+        nome, email, device, mode,
         podeMexer: mode === "edit",
         soVer: mode === "view",
         updatedAt: new Date().toISOString(),
@@ -8831,6 +8868,7 @@ function printProfessionalReport(){
   }
 
   async function applyCurrentDevicePermission(){
+    if (!canBootPermissions()) return;
     const email = getCurrentEmail();
     if (!email) return;
     const rows = await fetchPermissions();
@@ -8840,14 +8878,24 @@ function printProfessionalReport(){
     applyReadOnlyMode(mode === "view");
   }
 
-  window.__devicePermissionsBoot = async function(){
+  async function bootSafePermissions(){
+    if (!canBootPermissions()) return;
     await renderAdminPanel();
     await applyCurrentDevicePermission();
-  };
+  }
 
-  window.addEventListener("load", () => setTimeout(window.__devicePermissionsBoot, 1400));
+  let tries = 0;
+  const interval = setInterval(async () => {
+    tries += 1;
+    if (canBootPermissions()) {
+      await bootSafePermissions();
+      clearInterval(interval);
+    }
+    if (tries > 30) clearInterval(interval);
+  }, 1000);
+
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) setTimeout(window.__devicePermissionsBoot, 600);
+    if (!document.hidden) setTimeout(bootSafePermissions, 600);
   });
 })();
 </script>
