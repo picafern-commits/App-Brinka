@@ -2417,6 +2417,151 @@ td.acoes-col, .acoes-col{
   display:none !important;
 }
 
+
+
+.online-widget{
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:1200;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+.online-widget.hidden{display:none !important;}
+.online-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(74,222,128,.28);
+  background:linear-gradient(180deg, rgba(15,23,42,.96), rgba(30,41,59,.94));
+  color:#fff;
+  box-shadow:0 14px 30px rgba(0,0,0,.26);
+  cursor:pointer;
+}
+.online-toggle-count{
+  min-width:24px;
+  height:24px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(34,197,94,.18);
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:800;
+  padding:0 6px;
+}
+.online-card{
+  width:min(320px, calc(100vw - 28px));
+  max-height:min(420px, calc(100vh - 90px));
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(148,163,184,.16);
+  background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(30,41,59,.96));
+  box-shadow:0 24px 50px rgba(0,0,0,.32);
+  backdrop-filter:blur(14px);
+}
+.online-card.hidden{display:none !important;}
+.online-card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 16px 12px;
+  border-bottom:1px solid rgba(148,163,184,.12);
+}
+.online-card-head h3{
+  margin:0;
+  font-size:15px;
+  color:#fff;
+}
+.online-card-head small{
+  display:block;
+  margin-top:3px;
+  color:#94a3b8;
+}
+.online-head-actions{display:flex;align-items:center;gap:8px;}
+.online-head-btn{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.16);
+  background:rgba(15,23,42,.66);
+  color:#e2e8f0;
+  cursor:pointer;
+}
+.online-users-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+  overflow:auto;
+  max-height:320px;
+}
+.online-user-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(15,23,42,.64);
+  border:1px solid rgba(148,163,184,.12);
+}
+.online-user-main{display:flex;align-items:center;gap:12px;min-width:0;}
+.online-dot{
+  width:11px;
+  height:11px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 0 4px rgba(34,197,94,.16);
+  flex:0 0 auto;
+}
+.online-user-meta{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.online-user-name{
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-user-sub{
+  color:#94a3b8;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-role-pill{
+  border-radius:999px;
+  padding:6px 10px;
+  background:rgba(59,130,246,.14);
+  border:1px solid rgba(96,165,250,.22);
+  color:#dbeafe;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+.online-empty{
+  padding:18px 12px;
+  text-align:center;
+  color:#94a3b8;
+  font-size:13px;
+}
+@media (max-width: 768px){
+  .online-widget{top:10px;right:10px;}
+  .online-card{width:min(300px, calc(100vw - 20px));border-radius:18px;}
+  .online-card-head{padding:14px 14px 10px;}
+  .online-users-list{padding:10px;max-height:280px;}
+}
+
 </style>
 </head>
 <body>
@@ -2451,6 +2596,25 @@ td.acoes-col, .acoes-col{
   </div>
 
   <div id="appRoot" class="app-shell hidden">
+    <div id="onlineUsersWidget" class="online-widget hidden">
+      <button id="onlineUsersToggle" type="button" class="online-toggle" title="Mostrar / esconder utilizadores online">
+        <span>👥 Online</span>
+        <span id="onlineUsersCount" class="online-toggle-count">0</span>
+      </button>
+      <div id="onlineUsersCard" class="online-card">
+        <div class="online-card-head">
+          <div>
+            <h3>Utilizadores online</h3>
+            <small>Atualização em tempo real</small>
+          </div>
+          <div class="online-head-actions">
+            <button id="onlineUsersRefresh" type="button" class="online-head-btn" title="Atualizar">↻</button>
+            <button id="onlineUsersHide" type="button" class="online-head-btn" title="Esconder">✕</button>
+          </div>
+        </div>
+        <div id="onlineUsersList" class="online-users-list"></div>
+      </div>
+    </div>
     <aside class="sidebar">
       <div class="brand-card">
         <img class="sidebar-logo" src="logo-icon-dark.png" alt="Logo Jorge Torneiro" />
@@ -2711,11 +2875,13 @@ const loginForm = document.getElementById('loginForm');
 function showApp(){
   document.getElementById('loginScreen')?.classList.add('hidden');
   document.getElementById('appRoot')?.classList.remove('hidden');
+  document.getElementById('onlineUsersWidget')?.classList.remove('hidden');
 }
 
 function showLogin(){
   document.getElementById('loginScreen')?.classList.remove('hidden');
   document.getElementById('appRoot')?.classList.add('hidden');
+  document.getElementById('onlineUsersWidget')?.classList.add('hidden');
 }
 
 window.showApp = showApp;
@@ -3319,6 +3485,151 @@ function buildProfessionalReportHtml(){
   display:none !important;
 }
 
+
+
+.online-widget{
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:1200;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+.online-widget.hidden{display:none !important;}
+.online-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(74,222,128,.28);
+  background:linear-gradient(180deg, rgba(15,23,42,.96), rgba(30,41,59,.94));
+  color:#fff;
+  box-shadow:0 14px 30px rgba(0,0,0,.26);
+  cursor:pointer;
+}
+.online-toggle-count{
+  min-width:24px;
+  height:24px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(34,197,94,.18);
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:800;
+  padding:0 6px;
+}
+.online-card{
+  width:min(320px, calc(100vw - 28px));
+  max-height:min(420px, calc(100vh - 90px));
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(148,163,184,.16);
+  background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(30,41,59,.96));
+  box-shadow:0 24px 50px rgba(0,0,0,.32);
+  backdrop-filter:blur(14px);
+}
+.online-card.hidden{display:none !important;}
+.online-card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 16px 12px;
+  border-bottom:1px solid rgba(148,163,184,.12);
+}
+.online-card-head h3{
+  margin:0;
+  font-size:15px;
+  color:#fff;
+}
+.online-card-head small{
+  display:block;
+  margin-top:3px;
+  color:#94a3b8;
+}
+.online-head-actions{display:flex;align-items:center;gap:8px;}
+.online-head-btn{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.16);
+  background:rgba(15,23,42,.66);
+  color:#e2e8f0;
+  cursor:pointer;
+}
+.online-users-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+  overflow:auto;
+  max-height:320px;
+}
+.online-user-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(15,23,42,.64);
+  border:1px solid rgba(148,163,184,.12);
+}
+.online-user-main{display:flex;align-items:center;gap:12px;min-width:0;}
+.online-dot{
+  width:11px;
+  height:11px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 0 4px rgba(34,197,94,.16);
+  flex:0 0 auto;
+}
+.online-user-meta{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.online-user-name{
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-user-sub{
+  color:#94a3b8;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-role-pill{
+  border-radius:999px;
+  padding:6px 10px;
+  background:rgba(59,130,246,.14);
+  border:1px solid rgba(96,165,250,.22);
+  color:#dbeafe;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+.online-empty{
+  padding:18px 12px;
+  text-align:center;
+  color:#94a3b8;
+  font-size:13px;
+}
+@media (max-width: 768px){
+  .online-widget{top:10px;right:10px;}
+  .online-card{width:min(300px, calc(100vw - 20px));border-radius:18px;}
+  .online-card-head{padding:14px 14px 10px;}
+  .online-users-list{padding:10px;max-height:280px;}
+}
+
 </style>
     </head>
     <body>
@@ -3409,6 +3720,13 @@ let firestoreDb = null;
 let syncReady = false;
 let syncMessage = 'Local';
 let unsubs = [];
+let presenceUnsub = null;
+let presenceHeartbeat = null;
+let presenceVisibilityBound = false;
+let onlineUsersCache = [];
+const PRESENCE_COLLECTION = 'presence_status';
+const PRESENCE_TIMEOUT_MS = 70000;
+const ONLINE_WIDGET_KEY = 'ge_online_widget_hidden';
 
 
 let authBootstrapped = false;
@@ -3466,6 +3784,130 @@ async function ensureFirebaseCore(){
   try{ await setPersistence(firebaseAuth, browserLocalPersistence); }catch(e){}
   return true;
 }
+
+function normalizePresenceId(){
+  const email = normalizeRoleEmail(currentUserEmail || firebaseAuth?.currentUser?.email);
+  if(email) return email.replace(/[^a-z0-9@._-]/gi, '_');
+  return String(firebaseAuth?.currentUser?.uid || currentUsername || 'utilizador').replace(/[^a-z0-9@._-]/gi, '_');
+}
+function roleLabel(role){
+  const val = normalizeRoleValue(role);
+  if(val === 'master_admin') return 'Master';
+  if(val === 'admin') return 'Admin';
+  return 'User';
+}
+function toggleOnlineUsersCard(force){
+  const card = $('onlineUsersCard');
+  const widget = $('onlineUsersWidget');
+  if(!card || !widget) return;
+  const shouldHide = typeof force === 'boolean' ? !force : !card.classList.contains('hidden');
+  card.classList.toggle('hidden', shouldHide);
+  try{ localStorage.setItem(ONLINE_WIDGET_KEY, shouldHide ? '1' : '0'); }catch(e){}
+}
+function initOnlineUsersUi(){
+  const widget = $('onlineUsersWidget');
+  const toggle = $('onlineUsersToggle');
+  const hideBtn = $('onlineUsersHide');
+  const refreshBtn = $('onlineUsersRefresh');
+  if(widget) widget.classList.toggle('hidden', !currentUsername);
+  if(toggle && !toggle.dataset.bound){
+    toggle.dataset.bound = '1';
+    toggle.addEventListener('click', () => toggleOnlineUsersCard());
+  }
+  if(hideBtn && !hideBtn.dataset.bound){
+    hideBtn.dataset.bound = '1';
+    hideBtn.addEventListener('click', () => toggleOnlineUsersCard(false));
+  }
+  if(refreshBtn && !refreshBtn.dataset.bound){
+    refreshBtn.dataset.bound = '1';
+    refreshBtn.addEventListener('click', () => renderOnlineUsersCard());
+  }
+  const hidden = (() => { try{ return localStorage.getItem(ONLINE_WIDGET_KEY) === '1'; }catch(e){ return false; } })();
+  toggleOnlineUsersCard(!hidden);
+}
+function renderOnlineUsersCard(){
+  const list = $('onlineUsersList');
+  const count = $('onlineUsersCount');
+  const widget = $('onlineUsersWidget');
+  if(widget) widget.classList.toggle('hidden', !currentUsername);
+  if(count) count.textContent = String(onlineUsersCache.length || 0);
+  if(!list) return;
+  if(!onlineUsersCache.length){
+    list.innerHTML = '<div class="online-empty">Sem utilizadores online neste momento.</div>';
+    return;
+  }
+  list.innerHTML = onlineUsersCache.map(user => {
+    const you = normalizeRoleEmail(user.email) === normalizeRoleEmail(currentUserEmail) ? ' (Tu)' : '';
+    const email = escapeHtml(user.email || '-');
+    const name = escapeHtml((user.username || user.email || 'Utilizador') + you);
+    const role = escapeHtml(roleLabel(user.role));
+    return `<div class="online-user-item"><div class="online-user-main"><span class="online-dot"></span><div class="online-user-meta"><div class="online-user-name">${name}</div><div class="online-user-sub">${email}</div></div></div><span class="online-role-pill">${role}</span></div>`;
+  }).join('');
+}
+async function updatePresenceState(isOnline = true){
+  try{
+    await ensureFirebaseCore();
+    const currentUser = firebaseAuth?.currentUser;
+    if(!currentUser || currentUser.isAnonymous) return;
+    const email = normalizeRoleEmail(currentUser.email || currentUserEmail);
+    const payload = {
+      email: email || '',
+      username: String(currentUsername || deriveLoginUsername(currentUser) || 'Utilizador'),
+      role: normalizeRoleValue(currentRole || 'user'),
+      isOnline: !!isOnline,
+      updatedAt: Date.now(),
+      page: String(document.querySelector('.page.active')?.id || '')
+    };
+    await setDoc(doc(firestoreDb, PRESENCE_COLLECTION, normalizePresenceId()), payload, { merge:true });
+  }catch(err){
+    console.warn('Presença online não atualizada:', err);
+  }
+}
+function stopPresenceTracking(){
+  try{ presenceUnsub && presenceUnsub(); }catch(e){}
+  presenceUnsub = null;
+  if(presenceHeartbeat){ clearInterval(presenceHeartbeat); presenceHeartbeat = null; }
+  onlineUsersCache = [];
+  renderOnlineUsersCard();
+}
+function bindPresenceVisibility(){
+  if(presenceVisibilityBound) return;
+  presenceVisibilityBound = true;
+  document.addEventListener('visibilitychange', () => {
+    if(!currentUsername) return;
+    updatePresenceState(!document.hidden);
+  });
+  window.addEventListener('beforeunload', () => {
+    if(!currentUsername) return;
+    try{
+      const currentUser = firebaseAuth?.currentUser;
+      const email = normalizeRoleEmail(currentUser?.email || currentUserEmail);
+      const payload = JSON.stringify({ email: email || '', username: String(currentUsername || ''), role: normalizeRoleValue(currentRole || 'user'), isOnline:false, updatedAt: Date.now() });
+      localStorage.setItem('ge_presence_fallback', payload);
+    }catch(e){}
+  });
+}
+function startPresenceTracking(){
+  if(!currentUsername || !firestoreDb) return;
+  initOnlineUsersUi();
+  bindPresenceVisibility();
+  stopPresenceTracking();
+  presenceUnsub = onSnapshot(collection(firestoreDb, PRESENCE_COLLECTION), snap => {
+    const now = Date.now();
+    onlineUsersCache = snap.docs.map(docSnap => ({ id: docSnap.id, ...(docSnap.data() || {}) }))
+      .filter(item => item && item.isOnline !== false && (now - Number(item.updatedAt || 0)) <= PRESENCE_TIMEOUT_MS)
+      .sort((a, b) => {
+        const aSelf = normalizeRoleEmail(a.email) === normalizeRoleEmail(currentUserEmail) ? 1 : 0;
+        const bSelf = normalizeRoleEmail(b.email) === normalizeRoleEmail(currentUserEmail) ? 1 : 0;
+        if(aSelf !== bSelf) return bSelf - aSelf;
+        return String(a.username || a.email || '').localeCompare(String(b.username || b.email || ''), 'pt', { sensitivity:'base' });
+      });
+    renderOnlineUsersCard();
+  }, err => console.warn('Não foi possível ler utilizadores online:', err));
+  updatePresenceState(true);
+  presenceHeartbeat = setInterval(() => updatePresenceState(true), 25000);
+}
+
 async function applyAuthenticatedSession(user){
   await ensureFirebaseCore();
   const role = await fetchRoleForUser(user);
@@ -3477,6 +3919,8 @@ async function applyAuthenticatedSession(user){
   if(window.startApp){
     window.startApp(role, username);
   }
+  initOnlineUsersUi();
+  startPresenceTracking();
 }
 function attachPrimaryAuthListener(){
   if(authListenerAttached) return;
@@ -3485,6 +3929,7 @@ function attachPrimaryAuthListener(){
     if(user && !user.isAnonymous){
       applyAuthenticatedSession(user).catch(err => console.error('Erro ao aplicar sessão autenticada:', err));
     }else if(!currentUsername){
+      stopPresenceTracking();
       if(window.showLogin) window.showLogin();
     }
   });
@@ -3527,12 +3972,14 @@ async function initFirebaseEmailLogin(){
   window.firebaseLogout = async function(){
     try{
       await ensureFirebaseCore();
+      await updatePresenceState(false);
       if(firebaseAuth.currentUser && !firebaseAuth.currentUser.isAnonymous){
         await signOut(firebaseAuth);
       }
     }catch(err){
       console.error('Erro ao terminar sessão:', err);
     }
+    stopPresenceTracking();
     currentRole = null;
     currentUsername = null;
     currentUserEmail = null;
@@ -4082,6 +4529,7 @@ function switchTab(tab){
   pages.forEach(p => p.classList.toggle('active', p.id===`${tab}-page`));
   const btn=document.querySelector(`.nav-btn[data-tab="${tab}"]`);
   $('pageTitle').textContent = btn ? btn.textContent.trim() : 'Dashboard';
+  try{ updatePresenceState(true); }catch(e){}
   if(tab === 'dashboard'){
     renderDashboard();
     renderAlerts();
@@ -5324,6 +5772,151 @@ td.acoes-col, .acoes-col{
 /* CAMPOS AVANÇADOS DO TRABALHO */
 .field-hidden-by-role{
   display:none !important;
+}
+
+
+
+.online-widget{
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:1200;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+.online-widget.hidden{display:none !important;}
+.online-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(74,222,128,.28);
+  background:linear-gradient(180deg, rgba(15,23,42,.96), rgba(30,41,59,.94));
+  color:#fff;
+  box-shadow:0 14px 30px rgba(0,0,0,.26);
+  cursor:pointer;
+}
+.online-toggle-count{
+  min-width:24px;
+  height:24px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(34,197,94,.18);
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:800;
+  padding:0 6px;
+}
+.online-card{
+  width:min(320px, calc(100vw - 28px));
+  max-height:min(420px, calc(100vh - 90px));
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(148,163,184,.16);
+  background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(30,41,59,.96));
+  box-shadow:0 24px 50px rgba(0,0,0,.32);
+  backdrop-filter:blur(14px);
+}
+.online-card.hidden{display:none !important;}
+.online-card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 16px 12px;
+  border-bottom:1px solid rgba(148,163,184,.12);
+}
+.online-card-head h3{
+  margin:0;
+  font-size:15px;
+  color:#fff;
+}
+.online-card-head small{
+  display:block;
+  margin-top:3px;
+  color:#94a3b8;
+}
+.online-head-actions{display:flex;align-items:center;gap:8px;}
+.online-head-btn{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.16);
+  background:rgba(15,23,42,.66);
+  color:#e2e8f0;
+  cursor:pointer;
+}
+.online-users-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+  overflow:auto;
+  max-height:320px;
+}
+.online-user-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(15,23,42,.64);
+  border:1px solid rgba(148,163,184,.12);
+}
+.online-user-main{display:flex;align-items:center;gap:12px;min-width:0;}
+.online-dot{
+  width:11px;
+  height:11px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 0 4px rgba(34,197,94,.16);
+  flex:0 0 auto;
+}
+.online-user-meta{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.online-user-name{
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-user-sub{
+  color:#94a3b8;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-role-pill{
+  border-radius:999px;
+  padding:6px 10px;
+  background:rgba(59,130,246,.14);
+  border:1px solid rgba(96,165,250,.22);
+  color:#dbeafe;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+.online-empty{
+  padding:18px 12px;
+  text-align:center;
+  color:#94a3b8;
+  font-size:13px;
+}
+@media (max-width: 768px){
+  .online-widget{top:10px;right:10px;}
+  .online-card{width:min(300px, calc(100vw - 20px));border-radius:18px;}
+  .online-card-head{padding:14px 14px 10px;}
+  .online-users-list{padding:10px;max-height:280px;}
 }
 
 </style></head><body>${bodyHtml}</body></html>`); win.document.close(); setTimeout(()=>{ win.focus(); win.print(); },300); }
@@ -6619,6 +7212,151 @@ function buildProfessionalReportHtml(){
 /* CAMPOS AVANÇADOS DO TRABALHO */
 .field-hidden-by-role{
   display:none !important;
+}
+
+
+
+.online-widget{
+  position:fixed;
+  top:18px;
+  right:18px;
+  z-index:1200;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:10px;
+}
+.online-widget.hidden{display:none !important;}
+.online-toggle{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(74,222,128,.28);
+  background:linear-gradient(180deg, rgba(15,23,42,.96), rgba(30,41,59,.94));
+  color:#fff;
+  box-shadow:0 14px 30px rgba(0,0,0,.26);
+  cursor:pointer;
+}
+.online-toggle-count{
+  min-width:24px;
+  height:24px;
+  border-radius:999px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(34,197,94,.18);
+  color:#bbf7d0;
+  font-size:12px;
+  font-weight:800;
+  padding:0 6px;
+}
+.online-card{
+  width:min(320px, calc(100vw - 28px));
+  max-height:min(420px, calc(100vh - 90px));
+  overflow:hidden;
+  border-radius:22px;
+  border:1px solid rgba(148,163,184,.16);
+  background:linear-gradient(180deg, rgba(15,23,42,.98), rgba(30,41,59,.96));
+  box-shadow:0 24px 50px rgba(0,0,0,.32);
+  backdrop-filter:blur(14px);
+}
+.online-card.hidden{display:none !important;}
+.online-card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 16px 12px;
+  border-bottom:1px solid rgba(148,163,184,.12);
+}
+.online-card-head h3{
+  margin:0;
+  font-size:15px;
+  color:#fff;
+}
+.online-card-head small{
+  display:block;
+  margin-top:3px;
+  color:#94a3b8;
+}
+.online-head-actions{display:flex;align-items:center;gap:8px;}
+.online-head-btn{
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.16);
+  background:rgba(15,23,42,.66);
+  color:#e2e8f0;
+  cursor:pointer;
+}
+.online-users-list{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding:14px;
+  overflow:auto;
+  max-height:320px;
+}
+.online-user-item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  border-radius:16px;
+  background:rgba(15,23,42,.64);
+  border:1px solid rgba(148,163,184,.12);
+}
+.online-user-main{display:flex;align-items:center;gap:12px;min-width:0;}
+.online-dot{
+  width:11px;
+  height:11px;
+  border-radius:999px;
+  background:#22c55e;
+  box-shadow:0 0 0 4px rgba(34,197,94,.16);
+  flex:0 0 auto;
+}
+.online-user-meta{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.online-user-name{
+  color:#fff;
+  font-weight:800;
+  font-size:14px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-user-sub{
+  color:#94a3b8;
+  font-size:12px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.online-role-pill{
+  border-radius:999px;
+  padding:6px 10px;
+  background:rgba(59,130,246,.14);
+  border:1px solid rgba(96,165,250,.22);
+  color:#dbeafe;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+  white-space:nowrap;
+}
+.online-empty{
+  padding:18px 12px;
+  text-align:center;
+  color:#94a3b8;
+  font-size:13px;
+}
+@media (max-width: 768px){
+  .online-widget{top:10px;right:10px;}
+  .online-card{width:min(300px, calc(100vw - 20px));border-radius:18px;}
+  .online-card-head{padding:14px 14px 10px;}
+  .online-users-list{padding:10px;max-height:280px;}
 }
 
 </style>
