@@ -3187,6 +3187,8 @@ td.acoes-col, .acoes-col{
                   <input type="hidden" id="managedUserIndex" />
                   <div class="field"><label>Email</label><input id="managedUsername" type="email" placeholder="utilizador@empresa.com" required /></div>
                   <div class="field"><label>Tipo</label><select id="managedRole"><option value="user">User</option><option value="admin">Admin</option><option value="master_admin">Master Admin</option></select></div>
+                  <div class="field"><label>Computador</label><select id="managedPcMode"><option value="edit">Pode mexer</option><option value="view">Só ver</option></select></div>
+                  <div class="field"><label>Mobile</label><select id="managedMobileMode"><option value="edit">Pode mexer</option><option value="view">Só ver</option></select></div>
                   <div class="field field-span-2">
                     <div class="inline-actions">
                       <button type="submit" class="btn btn-primary">Guardar role</button>
@@ -3200,7 +3202,7 @@ td.acoes-col, .acoes-col{
                 <div class="panel-head"><h3>Lista de utilizadores</h3></div>
                 <div class="table-wrap">
                   <table>
-                    <thead><tr><th>Email</th><th>Tipo</th><th>Ações</th></tr></thead>
+                    <thead><tr><th>Email</th><th>Tipo</th><th>Computador</th><th>Mobile</th><th>Ações</th></tr></thead>
                     <tbody id="managedUsersTableBody"></tbody>
                   </table>
                 </div>
@@ -4243,9 +4245,7 @@ function buildProfessionalReportHtml(){
         </thead>
         <tbody>${historyHtml}</tbody>
       </table>
-    <script src="permissions_v1.js"></script>
-<script src="backup_auto.js"></script>
-</body>
+    </body>
   </html>`;
 }
 
@@ -4324,6 +4324,10 @@ function deriveLoginUsername(user){
 function normalizeRoleValue(role){
   const value = String(role || 'user').toLowerCase();
   return ['user','admin','master_admin'].includes(value) ? value : 'user';
+}
+function normalizeAccessMode(mode){
+  const value = String(mode || 'edit').toLowerCase();
+  return ['edit','view'].includes(value) ? value : 'edit';
 }
 function normalizeRoleEmail(email){
   return String(email || '').trim().toLowerCase();
@@ -5000,10 +5004,23 @@ function normalizeManagedUsers(users){
   (Array.isArray(users) ? users : []).forEach((u) => {
     const email = normalizeRoleEmail(u.email || u.username);
     if(!email) return;
-    map.set(email, { email, username: email, role: normalizeRoleValue(u.role) });
+    map.set(email, {
+      email,
+      username: email,
+      role: normalizeRoleValue(u.role),
+      pcMode: normalizeAccessMode(u.pcMode),
+      mobileMode: normalizeAccessMode(u.mobileMode)
+    });
   });
   MASTER_EMAILS.forEach(email => {
-    map.set(email, { email, username: email, role: 'master_admin' });
+    const prev = map.get(email) || {};
+    map.set(email, {
+      email,
+      username: email,
+      role: 'master_admin',
+      pcMode: normalizeAccessMode(prev.pcMode),
+      mobileMode: normalizeAccessMode(prev.mobileMode)
+    });
   });
   return Array.from(map.values()).sort((a,b)=> (a.email || '').localeCompare(b.email || ''));
 }
@@ -5036,7 +5053,12 @@ async function loadManagedUsersFromFirestore(){
     const users = [];
     snap.forEach(docSnap => {
       const data = docSnap.data() || {};
-      users.push({ email: normalizeRoleEmail(data.email || docSnap.id), role: normalizeRoleValue(data.role) });
+      users.push({
+        email: normalizeRoleEmail(data.email || docSnap.id),
+        role: normalizeRoleValue(data.role),
+        pcMode: normalizeAccessMode(data.pcMode),
+        mobileMode: normalizeAccessMode(data.mobileMode)
+      });
     });
     MASTER_EMAILS.forEach(email => {
       if(!users.some(u => normalizeRoleEmail(u.email) === email)) users.push({ email, role:'master_admin' });
@@ -5052,12 +5074,15 @@ async function loadManagedUsersFromFirestore(){
 async function renderManagedUsers(){
   const tbody = $('managedUsersTableBody');
   if(!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="3">A carregar...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="5">A carregar...</td></tr>';
   const users = await loadManagedUsersFromFirestore();
+  const modeLabel = (mode) => normalizeAccessMode(mode) === 'view' ? 'Só ver' : 'Pode mexer';
   tbody.innerHTML = users.length ? users.map((u, idx) => `
     <tr>
       <td>${escapeHtml(u.email || u.username || '-')}</td>
       <td>${escapeHtml(u.role || 'user')}</td>
+      <td>${escapeHtml(modeLabel(u.pcMode))}</td>
+      <td>${escapeHtml(modeLabel(u.mobileMode))}</td>
       <td>
         <div class="row-actions">
           <button class="small-btn" onclick="window.editManagedUser(${idx})">Editar</button>
@@ -5065,7 +5090,7 @@ async function renderManagedUsers(){
         </div>
       </td>
     </tr>
-  `).join('') : '<tr><td colspan="3">Sem utilizadores.</td></tr>';
+  `).join('') : '<tr><td colspan="5">Sem utilizadores.</td></tr>';
 }
 
 window.editManagedUser = function(index){
@@ -5076,6 +5101,8 @@ window.editManagedUser = function(index){
   $('managedUserIndex').value = String(index);
   $('managedUsername').value = u.email || u.username || '';
   $('managedRole').value = u.role || 'user';
+  if($('managedPcMode')) $('managedPcMode').value = normalizeAccessMode(u.pcMode);
+  if($('managedMobileMode')) $('managedMobileMode').value = normalizeAccessMode(u.mobileMode);
   switchTab('configuracoes');
 };
 
@@ -6637,9 +6664,7 @@ td.acoes-col, .acoes-col{
   .online-users-list{padding:10px;max-height:280px;}
 }
 
-</style></head><body>${bodyHtml}<script src="permissions_v1.js"></script>
-<script src="backup_auto.js"></script>
-</body></html>`); win.document.close(); setTimeout(()=>{ win.focus(); win.print(); },300); }
+</style></head><body>${bodyHtml}</body></html>`); win.document.close(); setTimeout(()=>{ win.focus(); win.print(); },300); }
 
 
 function getAgendaDate(t){
@@ -7426,6 +7451,8 @@ $('userManagerForm')?.addEventListener('submit', async (e) => {
 
   const email = normalizeRoleEmail($('managedUsername').value);
   const role = normalizeRoleValue($('managedRole').value);
+  const pcMode = normalizeAccessMode($('managedPcMode')?.value);
+  const mobileMode = normalizeAccessMode($('managedMobileMode')?.value);
 
   if(!email){
     alert('Preenche o email do utilizador.');
@@ -7437,12 +7464,16 @@ $('userManagerForm')?.addEventListener('submit', async (e) => {
     await setDoc(doc(firestoreDb, ROLE_COLLECTION, email), {
       email,
       role,
+      pcMode,
+      mobileMode,
       updatedAt: new Date().toISOString()
     }, { merge:true });
     await loadManagedUsersFromFirestore();
     $('userManagerForm').reset();
     $('managedUserIndex').value = '';
     $('managedRole').value = 'user';
+    if($('managedPcMode')) $('managedPcMode').value = 'edit';
+    if($('managedMobileMode')) $('managedMobileMode').value = 'edit';
     renderManagedUsers();
     updateWorkCodePreview();
     updateWorkCodePreview();
@@ -7462,6 +7493,8 @@ $('clearManagedUserBtn')?.addEventListener('click', ()=>{
   $('userManagerForm')?.reset();
   $('managedUserIndex').value = '';
   $('managedRole').value = 'user';
+  if($('managedPcMode')) $('managedPcMode').value = 'edit';
+  if($('managedMobileMode')) $('managedMobileMode').value = 'edit';
 });
 
 
@@ -8113,9 +8146,7 @@ function buildProfessionalReportHtml(){
         </thead>
         <tbody>${historyHtml}</tbody>
       </table>
-    <script src="permissions_v1.js"></script>
-<script src="backup_auto.js"></script>
-</body>
+    </body>
   </html>`;
 }
 
@@ -8195,7 +8226,5 @@ function printProfessionalReport(){
     </div>
   </div>
 
-<script src="permissions_v1.js"></script>
-<script src="backup_auto.js"></script>
 </body>
 </html>
