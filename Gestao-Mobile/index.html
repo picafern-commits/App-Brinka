@@ -229,8 +229,6 @@ textarea{resize:vertical}
   flex-wrap:wrap;
   align-items:center;
 }
-.mobile-menu-btn{display:none;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);border-radius:14px;padding:10px 12px;min-height:44px;cursor:pointer;align-self:flex-start}
-.mobile-sidebar-backdrop{display:none}
 
 
 body.ui-auto{
@@ -1490,271 +1488,6 @@ tbody tr:hover{background:rgba(255,255,255,.025)}
 }
 
 
-/* ===== GESTAO-MOBILE PREMIUM 1.0.6 ===== */
-@media (max-width: 980px){
-  html{
-    -webkit-text-size-adjust:100%;
-  }
-
-  body{
-    min-height:100dvh;
-    overscroll-behavior-y:contain;
-  }
-
-  .sidebar{
-    display:none !important;
-  }
-
-  .app-shell{
-    display:block !important;
-    min-height:100dvh;
-  }
-
-  .main{
-    width:100% !important;
-    min-width:0 !important;
-    padding:12px 12px calc(96px + env(safe-area-inset-bottom)) !important;
-  }
-
-  .topbar{
-    position:sticky;
-    top:0;
-    z-index:45;
-    display:grid !important;
-    grid-template-columns:1fr;
-    gap:10px;
-    align-items:stretch;
-    padding:4px 0 10px;
-    margin-bottom:10px;
-    background:linear-gradient(180deg, rgba(6,10,18,.96), rgba(6,10,18,.78));
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid rgba(255,255,255,.04);
-  }
-
-  .topbar-left{
-    display:grid !important;
-    gap:4px;
-  }
-
-  #pageTitle{
-    font-size:24px !important;
-    line-height:1.06;
-    letter-spacing:-.02em;
-  }
-
-  .subline{
-    display:flex;
-    flex-wrap:wrap;
-    gap:6px;
-    font-size:11px !important;
-  }
-
-  .global-search{
-    width:100% !important;
-    max-width:none !important;
-    min-width:0 !important;
-    min-height:48px !important;
-    border-radius:16px !important;
-    font-size:16px !important;
-  }
-
-  .hero-panel,
-  .panel,
-  .form-panel,
-  .history-panel,
-  .payments-panel,
-  .setting-card,
-  .alert-card,
-  .stat-card,
-  .report-card{
-    border-radius:22px !important;
-    padding:16px !important;
-    box-shadow:0 12px 30px rgba(0,0,0,.18);
-  }
-
-  .hero-copy h3{
-    font-size:24px !important;
-    line-height:1.06;
-    margin-bottom:8px !important;
-  }
-
-  .hero-copy p{
-    font-size:14px !important;
-    line-height:1.5;
-  }
-
-  .hero-actions{
-    display:grid !important;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    width:100%;
-    margin-top:10px;
-  }
-
-  .hero-actions .btn{
-    width:100%;
-    justify-content:center;
-  }
-
-  .content-grid,
-  .dashboard-grid,
-  .stats-grid,
-  .clientes-grid,
-  .settings-grid,
-  .alert-grid,
-  .client-summary-grid,
-  .form-grid,
-  .single-panel-grid{
-    grid-template-columns:1fr !important;
-    gap:12px !important;
-  }
-
-  .field-span-2{
-    grid-column:span 1 !important;
-  }
-
-  .field label{
-    font-size:12px !important;
-    font-weight:600;
-    color:#b7c4df;
-  }
-
-  input,select,textarea{
-    min-height:50px !important;
-    font-size:16px !important;
-    border-radius:16px !important;
-    padding:14px !important;
-  }
-
-  textarea{
-    min-height:120px !important;
-  }
-
-  .toolbar{
-    display:grid !important;
-    grid-template-columns:1fr !important;
-    gap:10px;
-  }
-
-  .table-wrap{
-    overflow:auto;
-    border-radius:18px;
-  }
-
-  table{
-    min-width:720px;
-  }
-
-  .row-actions{
-    display:grid !important;
-    grid-template-columns:1fr 1fr;
-    gap:10px !important;
-  }
-
-  .row-actions .small-btn,
-  .row-actions .btn-action{
-    width:100%;
-    min-height:46px;
-    border-radius:14px !important;
-    white-space:nowrap;
-  }
-
-  .modal{
-    align-items:end !important;
-    padding:10px !important;
-  }
-
-  .modal-card{
-    width:100% !important;
-    max-width:100% !important;
-    border-radius:24px 24px 18px 18px !important;
-    max-height:min(82dvh, 760px);
-    overflow:auto;
-  }
-
-  .payment-method-grid{
-    grid-template-columns:1fr 1fr !important;
-    gap:10px !important;
-  }
-
-  .pay-method-btn{
-    min-height:62px !important;
-    border-radius:18px !important;
-    font-size:15px !important;
-  }
-
-  .bottom-nav{
-    display:flex !important;
-    position:fixed;
-    left:10px;
-    right:10px;
-    bottom:calc(10px + env(safe-area-inset-bottom));
-    z-index:70;
-    gap:8px;
-    overflow-x:auto;
-    padding:10px;
-    border-radius:24px;
-    background:rgba(10,14,24,.94);
-    border:1px solid rgba(255,255,255,.08);
-    box-shadow:0 16px 38px rgba(0,0,0,.28);
-    -webkit-overflow-scrolling:touch;
-  }
-
-  .bottom-btn{
-    flex:0 0 auto;
-    min-width:102px;
-    min-height:46px;
-    border-radius:16px !important;
-    font-size:13px !important;
-    font-weight:700;
-    padding:10px 12px !important;
-  }
-
-  .env-badge{
-    top:auto !important;
-    bottom:calc(118px + env(safe-area-inset-bottom));
-    right:12px !important;
-  }
-
-  .env-switch-btn{
-    top:auto !important;
-    bottom:calc(160px + env(safe-area-inset-bottom));
-    right:12px !important;
-  }
-}
-
-@media (max-width: 520px){
-  .main{
-    padding:10px 10px calc(96px + env(safe-area-inset-bottom)) !important;
-  }
-
-  #pageTitle{
-    font-size:22px !important;
-  }
-
-  .hero-copy h3{
-    font-size:22px !important;
-  }
-
-  .hero-actions{
-    grid-template-columns:1fr !important;
-  }
-
-  .row-actions{
-    grid-template-columns:1fr !important;
-  }
-
-  .payment-method-grid{
-    grid-template-columns:1fr !important;
-  }
-
-  .bottom-btn{
-    min-width:92px;
-    font-size:12px !important;
-  }
-}
-
-
 .stage-flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 0}
 .stage-chip{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:#cbd5e1;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:700;line-height:1;cursor:pointer;transition:.18s ease}
 .stage-chip.completed{background:rgba(34,197,94,.14);border-color:rgba(34,197,94,.34);color:#86efac}
@@ -1856,73 +1589,6 @@ button.stage-step.next::before{content:'→';font-size:11px;font-weight:900;marg
   .actions-cell{min-width:unset}
   .enterprise-actions{gap:6px}
   .stage-step,.payment-badge-inline,.enterprise-actions .small-btn{padding:6px 10px;font-size:11px}
-}
-
-
-/* MOBILE SIDEBAR + SCROLL FIX */
-@media (max-width: 980px){
-  html,body{
-    height:auto !important;
-    min-height:100%;
-    overflow-y:auto !important;
-    overflow-x:hidden !important;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:auto !important;
-  }
-  body{
-    min-height:100dvh;
-  }
-  .mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}
-  .mobile-sidebar-backdrop{
-    display:block;
-    position:fixed;
-    inset:0;
-    background:rgba(2,6,15,.55);
-    opacity:0;
-    pointer-events:none;
-    transition:.22s ease;
-    z-index:88;
-  }
-  .sidebar{
-    display:flex !important;
-    position:fixed !important;
-    top:0;
-    left:0;
-    bottom:0;
-    width:min(86vw,320px);
-    height:100dvh !important;
-    transform:translateX(-105%);
-    transition:transform .22s ease;
-    z-index:99;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-bottom:calc(20px + env(safe-area-inset-bottom));
-    box-shadow:0 20px 60px rgba(0,0,0,.45);
-  }
-  body.mobile-sidebar-open .sidebar{
-    transform:translateX(0);
-  }
-  body.mobile-sidebar-open .mobile-sidebar-backdrop{
-    opacity:1;
-    pointer-events:auto;
-  }
-  .main{
-    width:100% !important;
-    min-width:0 !important;
-    overflow:visible !important;
-    padding:12px 12px 20px !important;
-  }
-  .topbar{
-    display:grid !important;
-    grid-template-columns:1fr;
-  }
-  .topbar-left{
-    display:grid !important;
-    grid-template-columns:auto 1fr;
-    align-items:start;
-    gap:10px;
-  }
-  .bottom-nav{display:none !important;}
 }
 
 
@@ -2972,13 +2638,12 @@ td.acoes-col, .acoes-col{
         <div id="onlineUsersList" class="online-users-list"></div>
       </div>
     </div>
-    <div id="mobileSidebarBackdrop" class="mobile-sidebar-backdrop"></div>
     <aside class="sidebar">
       <div class="brand-card">
         <img class="sidebar-logo" src="logo-icon-dark.png" alt="Logo Jorge Torneiro" />
         <div>
           <h1>Jorge Torneiro</h1>
-          <p>App mobile produção produção</p>
+          <p>App tablet/PC</p>
         </div>
       </div>
 
@@ -3008,7 +2673,6 @@ td.acoes-col, .acoes-col{
     <main class="main">
       <header class="topbar">
         <div class="topbar-left">
-          <button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Abrir menu">☰</button>
           <div>
             <h2 id="pageTitle">Dashboard</h2>
             <div class="subline">
@@ -3226,7 +2890,17 @@ td.acoes-col, .acoes-col{
             </div>
           </div>
       </section>
-<script>
+  <nav class="bottom-nav">
+    <button class="bottom-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="bottom-btn" data-tab="adicionar">Adicionar</button>
+    <button class="bottom-btn" data-tab="trabalhos">Histórico</button>
+    <button class="bottom-btn" data-tab="clientes">Clientes</button>
+    <button class="bottom-btn" data-tab="pagamentos">Pagamentos</button>
+    <button class="bottom-btn" data-tab="relatorios">Relatórios</button>
+    <button class="bottom-btn" data-tab="configuracoes">Configurações</button>
+  </nav>
+
+  <script>
 
 
 const loginForm = document.getElementById('loginForm');
@@ -4392,11 +4066,11 @@ async function fetchRoleForUser(user){
 }
 async function fetchRoleProfileForUser(user){
   const email = normalizeRoleEmail(user?.email);
-  const baseProfile = { role:'user', pcMode:'edit', mobileMode:'edit' };
+  const baseProfile = { role:'user', pcMode:'edit', mobileMode:'edit', nome:'', displayName:'' };
   if(!email) return baseProfile;
   if(isMasterEmail(email)){
     await ensureRoleSeed(email, 'master_admin');
-    return { role:'master_admin', pcMode:'edit', mobileMode:'edit' };
+    return { role:'master_admin', pcMode:'edit', mobileMode:'edit', nome:'', displayName:'' };
   }
   if(!firestoreDb) return baseProfile;
   try{
@@ -4404,6 +4078,8 @@ async function fetchRoleProfileForUser(user){
     if(snap.exists()){
       const data = snap.data() || {};
       return {
+        nome: String(data.nome || data.displayName || '').trim(),
+        displayName: String(data.displayName || data.nome || '').trim(),
         role: normalizeRoleValue(data.role),
         pcMode: normalizeAccessMode(data.pcMode),
         mobileMode: normalizeAccessMode(data.mobileMode)
@@ -4522,7 +4198,7 @@ async function updatePresenceState(isOnline = true){
     const email = normalizeRoleEmail(currentUser.email || currentUserEmail);
     const payload = {
       email: email || '',
-      username: String(currentUsername || deriveLoginUsername(currentUser) || 'Utilizador'),
+      username: String(currentUsername || deriveLoginUsername(currentUser) || 'Utilizador').trim(),
       role: normalizeRoleValue(currentRole || 'user'),
       isOnline: !!isOnline,
       updatedAt: Date.now(),
@@ -4589,7 +4265,7 @@ async function applyAuthenticatedSession(user){
   const role = normalizeRoleValue(profile?.role);
   currentDeviceType = detectCurrentDeviceType();
   currentAccessMode = normalizeAccessMode(currentDeviceType === 'mobile' ? profile?.mobileMode : profile?.pcMode);
-  const username = deriveLoginUsername(user);
+  const username = String(profile?.nome || profile?.displayName || deriveLoginUsername(user) || 'Utilizador').trim();
   currentUserEmail = normalizeRoleEmail(user?.email);
   if(window.showApp) window.showApp();
   const loginError = $('loginError');
@@ -4679,22 +4355,12 @@ const navButtons = document.querySelectorAll('.nav-btn');
 const bottomButtons = document.querySelectorAll('.bottom-btn');
 const pages = document.querySelectorAll('.page');
 initFirebaseEmailLogin().catch(err => console.error('Falha ao iniciar login Firebase:', err));
-const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-const mobileSidebarBackdrop = document.getElementById('mobileSidebarBackdrop');
-
-function openMobileSidebar(){ document.body.classList.add('mobile-sidebar-open'); }
-function closeMobileSidebar(){ document.body.classList.remove('mobile-sidebar-open'); }
-function isMobileViewport(){ return window.innerWidth <= 980; }
-
-if(mobileMenuBtn){ mobileMenuBtn.addEventListener('click', openMobileSidebar); }
-if(mobileSidebarBackdrop){ mobileSidebarBackdrop.addEventListener('click', closeMobileSidebar); }
-window.addEventListener('resize', ()=>{ if(!isMobileViewport()) closeMobileSidebar(); });
 
 
 function applyUiScale(scale){
   document.body.classList.remove('ui-auto','ui-laptop','ui-compact','ui-normal','ui-large');
   const validScales = ['auto','laptop','compact','normal','large'];
-  const finalScale = validScales.includes(scale) ? scale : 'normal';
+  const finalScale = validScales.includes(scale) ? scale : 'compact';
   document.body.classList.add(`ui-${finalScale}`);
   localStorage.setItem('uiScale', finalScale);
   const select = document.getElementById('uiScaleSelect');
@@ -4718,7 +4384,7 @@ function detectDefaultScale(){
   const h = window.innerHeight || 0;
   if(w <= 1366 && h <= 768) return 'laptop';
   if(w <= 1400) return 'compact';
-  return 'normal';
+  return 'auto';
 }
 
 function initUiScale(){
@@ -5314,10 +4980,9 @@ function switchTab(tab){
     bindUiScaleSelector();
     renderManagedUsers();
   }
-  if(isMobileViewport()) closeMobileSidebar();
-  window.scrollTo({top:0,behavior:'auto'});
+  applyDeviceAccessRestrictions();
+  window.scrollTo({top:0,behavior:'smooth'});
 }
-
 navButtons.forEach(b => b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
 bottomButtons.forEach(b => b.addEventListener('click', ()=>switchTab(b.dataset.tab)));
 document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', ()=>switchTab(b.dataset.go)));
@@ -5716,73 +5381,6 @@ function printHtml(title, bodyHtml){ const win=window.open('', '_blank'); if(!wi
 @media (max-width: 900px){
   .actions-cell{min-width:unset}
   .enterprise-actions{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;white-space:nowrap}
-}
-
-
-/* MOBILE SIDEBAR + SCROLL FIX */
-@media (max-width: 980px){
-  html,body{
-    height:auto !important;
-    min-height:100%;
-    overflow-y:auto !important;
-    overflow-x:hidden !important;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:auto !important;
-  }
-  body{
-    min-height:100dvh;
-  }
-  .mobile-menu-btn{display:inline-flex;align-items:center;justify-content:center}
-  .mobile-sidebar-backdrop{
-    display:block;
-    position:fixed;
-    inset:0;
-    background:rgba(2,6,15,.55);
-    opacity:0;
-    pointer-events:none;
-    transition:.22s ease;
-    z-index:88;
-  }
-  .sidebar{
-    display:flex !important;
-    position:fixed !important;
-    top:0;
-    left:0;
-    bottom:0;
-    width:min(86vw,320px);
-    height:100dvh !important;
-    transform:translateX(-105%);
-    transition:transform .22s ease;
-    z-index:99;
-    overflow-y:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-bottom:calc(20px + env(safe-area-inset-bottom));
-    box-shadow:0 20px 60px rgba(0,0,0,.45);
-  }
-  body.mobile-sidebar-open .sidebar{
-    transform:translateX(0);
-  }
-  body.mobile-sidebar-open .mobile-sidebar-backdrop{
-    opacity:1;
-    pointer-events:auto;
-  }
-  .main{
-    width:100% !important;
-    min-width:0 !important;
-    overflow:visible !important;
-    padding:12px 12px 20px !important;
-  }
-  .topbar{
-    display:grid !important;
-    grid-template-columns:1fr;
-  }
-  .topbar-left{
-    display:grid !important;
-    grid-template-columns:auto 1fr;
-    align-items:start;
-    gap:10px;
-  }
-  .bottom-nav{display:none !important;}
 }
 
 
