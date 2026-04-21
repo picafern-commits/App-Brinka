@@ -3126,11 +3126,16 @@ async function importBackupDataObject(data){
 
   const keys = (typeof STORAGE_KEYS === 'object' && STORAGE_KEYS) ? STORAGE_KEYS : { trabalhos:'ge_trabalhos', clientes:'ge_clientes', pagamentos:'ge_pagamentos', lastTrabId:'ge_last_trab_id' };
 
+  isImportingBackup = true;
   try{ if(typeof clearRealtimeListeners === 'function') clearRealtimeListeners(); }catch(e){}
 
-  trabalhos = novosTrabalhos.map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape({ ...item }) : { ...item });
-  clientes = novosClientes.map(item => ({ ...item }));
-  pagamentos = novosPagamentos.map(item => ({ ...item }));
+  const importedTrabalhos = novosTrabalhos.map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape({ ...item }) : { ...item });
+  const importedClientes = novosClientes.map(item => ({ ...item }));
+  const importedPagamentos = novosPagamentos.map(item => ({ ...item }));
+
+  trabalhos = importedTrabalhos.map(item => ({ ...item }));
+  clientes = importedClientes.map(item => ({ ...item }));
+  pagamentos = importedPagamentos.map(item => ({ ...item }));
   window.trabalhos = trabalhos;
   window.clientes = clientes;
   window.pagamentos = pagamentos;
@@ -3160,6 +3165,13 @@ async function importBackupDataObject(data){
     remoteSummary = ' Importado localmente, mas houve erro a sincronizar com a Firebase.';
   }
 
+  trabalhos = importedTrabalhos.map(item => ({ ...item }));
+  clientes = importedClientes.map(item => ({ ...item }));
+  pagamentos = importedPagamentos.map(item => ({ ...item }));
+  window.trabalhos = trabalhos;
+  window.clientes = clientes;
+  window.pagamentos = pagamentos;
+  try{ if(typeof saveLocal === 'function') saveLocal(); }catch(e){}
   try{ if(typeof renderAll === 'function') renderAll(); }catch(e){}
   try{ if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); }catch(e){}
 
@@ -3169,14 +3181,15 @@ async function importBackupDataObject(data){
 
   alert(`Backup importado com sucesso. Trabalhos: ${trabalhos.length}, Clientes: ${clientes.length}, Pagamentos: ${pagamentos.length}.${remoteSummary}`);
 
+  isImportingBackup = false;
+  try{ if(typeof attachRealtimeListeners === 'function') attachRealtimeListeners(); }catch(e){}
   if(syncOk){
     setTimeout(() => {
-      try{ window.location.reload(); }catch(e){ try{ location.reload(); }catch(_){} }
+      try{ if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); }catch(e){}
     }, 250);
-  }else{
-    try{ if(typeof attachRealtimeListeners === 'function') attachRealtimeListeners(); }catch(e){}
   }
 }
+
 
 function importBackupFile(event){
   const file = event && event.target && event.target.files ? event.target.files[0] : null;
@@ -3811,6 +3824,7 @@ let firestoreDb = null;
 let syncReady = false;
 let syncMessage = 'Local';
 let unsubs = [];
+let isImportingBackup = false;
 let presenceUnsub = null;
 let presenceHeartbeat = null;
 let presenceVisibilityBound = false;
@@ -4762,6 +4776,7 @@ function attachRealtimeListeners(){
   if (!firestoreDb || unsubs.length) return;
   const bind = (name, setter) => {
     const unsub = onSnapshot(collection(firestoreDb, name), snap => {
+      if (isImportingBackup) return;
       const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setter(rows);
       saveLocal();
