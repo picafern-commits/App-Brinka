@@ -3330,26 +3330,11 @@ function getBackupTodayIso(){
   return `${y}-${m}-${d}`;
 }
 
-function readBackupArrayFromStorage(primaryKey, legacyKey){
-  try{
-    const raw = localStorage.getItem(primaryKey) || localStorage.getItem(legacyKey) || '[]';
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  }catch(e){
-    return [];
-  }
-}
-
 function getAppDataSnapshot(){
-  const keys = (typeof STORAGE_KEYS === 'object' && STORAGE_KEYS) ? STORAGE_KEYS : { trabalhos:'ge_trabalhos', clientes:'ge_clientes', pagamentos:'ge_pagamentos', lastTrabId:'ge_last_trab_id' };
-  const trabalhosLista = Array.isArray(window.trabalhos) ? window.trabalhos : (typeof trabalhos !== 'undefined' && Array.isArray(trabalhos) ? trabalhos : readBackupArrayFromStorage(keys.trabalhos, 'trabalhos'));
-  const clientesLista = Array.isArray(window.clientes) ? window.clientes : (typeof clientes !== 'undefined' && Array.isArray(clientes) ? clientes : readBackupArrayFromStorage(keys.clientes, 'clientes'));
-  const pagamentosLista = Array.isArray(window.pagamentos) ? window.pagamentos : (typeof pagamentos !== 'undefined' && Array.isArray(pagamentos) ? pagamentos : readBackupArrayFromStorage(keys.pagamentos, 'pagamentos'));
+  const trabalhosLista = window.trabalhos || (typeof trabalhos !== 'undefined' ? trabalhos : JSON.parse(localStorage.getItem('trabalhos') || '[]'));
+  const clientesLista = window.clientes || (typeof clientes !== 'undefined' ? clientes : JSON.parse(localStorage.getItem('clientes') || '[]'));
+  const pagamentosLista = window.pagamentos || (typeof pagamentos !== 'undefined' ? pagamentos : JSON.parse(localStorage.getItem('pagamentos') || '[]'));
   return {
-    exportadoEm: new Date().toISOString(),
-    appVersion: '1.0.6',
-    currentUsername: (typeof currentUser !== 'undefined' && currentUser) || localStorage.getItem('currentUser') || '',
-    currentRole: (typeof currentRole !== 'undefined' && currentRole) || localStorage.getItem('currentRole') || '',
     trabalhos: Array.isArray(trabalhosLista) ? trabalhosLista : [],
     clientes: Array.isArray(clientesLista) ? clientesLista : [],
     pagamentos: Array.isArray(pagamentosLista) ? pagamentosLista : [],
@@ -3436,46 +3421,19 @@ async function syncBackupCollectionToFirebase(collectionName, items){
   return { upserts, deletes };
 }
 
-function extractImportBackupPayload(data){
-  if(!data || typeof data !== 'object'){
-    throw new Error('Backup inválido.');
-  }
-
-  const source = (data && typeof data === 'object' && data.backup && typeof data.backup === 'object') ? data.backup : data;
-  const trabalhosRaw = Array.isArray(source.trabalhos) ? source.trabalhos : [];
-  const clientesRaw = Array.isArray(source.clientes) ? source.clientes : [];
-  const pagamentosRaw = Array.isArray(source.pagamentos) ? source.pagamentos : [];
-
-  if(!trabalhosRaw.length && !clientesRaw.length && !pagamentosRaw.length){
-    throw new Error('O ficheiro JSON não contém listas de trabalhos, clientes ou pagamentos.');
-  }
-
-  return {
-    trabalhos: trabalhosRaw,
-    clientes: clientesRaw,
-    pagamentos: pagamentosRaw
-  };
-}
-
 async function importBackupDataObject(data){
-  const payload = extractImportBackupPayload(data);
-  const novosTrabalhos = payload.trabalhos
-    .filter(item => item && typeof item === 'object')
-    .map(item => {
-      const normalized = { ...item };
-      if(!normalized.id){
-        normalized.id = normalized.workCode || normalized.ordemId || `trab_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
-      }
-      return typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape(normalized) : normalized;
-    });
-  const novosClientes = payload.clientes
-    .filter(item => item && typeof item === 'object')
-    .map(item => ({ ...item, id: item.id || `cli_${Date.now()}_${Math.random().toString(36).slice(2,8)}` }));
-  const novosPagamentos = payload.pagamentos
-    .filter(item => item && typeof item === 'object')
-    .map(item => ({ ...item, id: item.id || `pay_${Date.now()}_${Math.random().toString(36).slice(2,8)}` }));
+  if(!data || typeof data !== 'object'){
+    alert('Backup inválido.');
+    return;
+  }
+  const novosTrabalhos = (Array.isArray(data.trabalhos) ? data.trabalhos : []).map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape(item) : item);
+  const novosClientes = Array.isArray(data.clientes) ? data.clientes : [];
+  const novosPagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : [];
 
   const keys = (typeof STORAGE_KEYS === 'object' && STORAGE_KEYS) ? STORAGE_KEYS : { trabalhos:'ge_trabalhos', clientes:'ge_clientes', pagamentos:'ge_pagamentos', lastTrabId:'ge_last_trab_id' };
+
+  importInProgress = true;
+  try{ clearRealtimeListeners(); }catch(e){}
 
   localStorage.setItem(keys.trabalhos, JSON.stringify(novosTrabalhos));
   localStorage.setItem(keys.clientes, JSON.stringify(novosClientes));
@@ -3484,29 +3442,15 @@ async function importBackupDataObject(data){
   localStorage.setItem('clientes', JSON.stringify(novosClientes));
   localStorage.setItem('pagamentos', JSON.stringify(novosPagamentos));
 
-  try{
-    if(typeof window.trabalhos !== 'undefined') window.trabalhos = novosTrabalhos;
-    if(typeof window.clientes !== 'undefined') window.clientes = novosClientes;
-    if(typeof window.pagamentos !== 'undefined') window.pagamentos = novosPagamentos;
-    if(typeof trabalhos !== 'undefined') trabalhos = novosTrabalhos;
-    if(typeof clientes !== 'undefined') clientes = novosClientes;
-    if(typeof pagamentos !== 'undefined') pagamentos = novosPagamentos;
-  }catch(e){}
+  try{ trabalhos = novosTrabalhos; }catch(e){}
+  try{ clientes = novosClientes; }catch(e){}
+  try{ pagamentos = novosPagamentos; }catch(e){}
+  try{ window.trabalhos = novosTrabalhos; }catch(e){}
+  try{ window.clientes = novosClientes; }catch(e){}
+  try{ window.pagamentos = novosPagamentos; }catch(e){}
 
   recalcLastTrabIdFromList(novosTrabalhos);
-
-  let remoteSummary = '';
-  try{
-    const [trabSync, cliSync, pagSync] = await Promise.all([
-      syncBackupCollectionToFirebase('trabalhos', novosTrabalhos),
-      syncBackupCollectionToFirebase('clientes', novosClientes),
-      syncBackupCollectionToFirebase('pagamentos', novosPagamentos)
-    ]);
-    remoteSummary = ` Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
-  }catch(err){
-    console.error('Erro ao sincronizar backup para Firebase:', err);
-    throw new Error(`Backup lido, mas não foi possível sincronizar com a Firebase: ${err?.message || err}`);
-  }
+  try{ saveLocal(); }catch(e){}
 
   try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
   try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
@@ -3514,13 +3458,29 @@ async function importBackupDataObject(data){
   try { if(typeof renderDashboard === 'function') renderDashboard(); } catch(e){}
   try { if(typeof renderRelatorios === 'function') { renderRelatorios(); try{ renderAdvancedReports(); }catch(e){} } } catch(e){}
   try { if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); } catch(e){}
-  try { if(typeof loadAllData === 'function') loadAllData(); } catch(e){}
-  setTimeout(() => {
-    try { if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); } catch(e){}
-    try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
-  }, 350);
 
-  alert(`Backup importado com sucesso. ${novosTrabalhos.length} trabalhos, ${novosClientes.length} clientes e ${novosPagamentos.length} pagamentos carregados.${remoteSummary}`);
+  let remoteSummary = '';
+  try{
+    const trabSync = await syncBackupCollectionToFirebase('trabalhos', novosTrabalhos);
+    const cliSync = await syncBackupCollectionToFirebase('clientes', novosClientes);
+    const pagSync = await syncBackupCollectionToFirebase('pagamentos', novosPagamentos);
+    remoteSummary = `
+Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
+  }catch(err){
+    console.error('Erro ao sincronizar backup para Firebase:', err);
+    alert('Backup importado localmente, mas houve erro a sincronizar com a Firebase.');
+  } finally {
+    importInProgress = false;
+    try{ attachRealtimeListeners(); }catch(e){}
+    setTimeout(() => {
+      try { if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); } catch(e){}
+      try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
+      try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
+      try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
+    }, 500);
+  }
+
+  alert(`Backup importado com sucesso.${remoteSummary}`);
 }
 
 function importBackupFile(event){
@@ -3529,21 +3489,14 @@ function importBackupFile(event){
   const reader = new FileReader();
   reader.onload = async function(e){
     try{
-      const rawText = String(e?.target?.result || '');
-      const data = JSON.parse(rawText);
+      const data = JSON.parse(e.target.result);
       await importBackupDataObject(data);
-    }catch(err){
-      console.error('Erro ao importar backup:', err);
-      alert(`Não foi possível importar o backup. ${err?.message || ''}`.trim());
-    }finally{
       if(event.target) event.target.value = '';
+    }catch(err){
+      alert('Não foi possível ler o backup.');
     }
   };
-  reader.onerror = function(){
-    if(event.target) event.target.value = '';
-    alert('Não foi possível ler o ficheiro de backup.');
-  };
-  reader.readAsText(file, 'utf-8');
+  reader.readAsText(file);
 }
 
 function runWeeklyAutomaticBackupSilently(){
@@ -4147,6 +4100,7 @@ let managedUsersCache = [];
 const ROLE_COLLECTION = 'user_roles';
 const MASTER_EMAILS = ['pica.fern@gmail.com'];
 let trabalhos = [], clientes = [], pagamentos = [];
+let importInProgress = false;
 let lastTrabId = 0;
 
 let firebaseApp = null;
@@ -5118,6 +5072,7 @@ function attachRealtimeListeners(){
   if (!firestoreDb || unsubs.length) return;
   const bind = (name, setter) => {
     const unsub = onSnapshot(collection(firestoreDb, name), snap => {
+      if (importInProgress) return;
       const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setter(rows);
       saveLocal();
