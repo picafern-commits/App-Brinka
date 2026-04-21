@@ -3064,21 +3064,58 @@ function recalcLastTrabIdFromList(trabalhosLista){
   }catch(e){}
 }
 
+
+async function waitForFirebaseUser(timeoutMs = 6000){
+  try{
+    if(typeof firebaseAuth === 'undefined' || !firebaseAuth) return null;
+    if(firebaseAuth.currentUser) return firebaseAuth.currentUser;
+    if(typeof onAuthStateChanged !== 'function') return null;
+    return await new Promise(resolve => {
+      let done = false;
+      let unsub = null;
+      const finish = (user) => {
+        if(done) return;
+        done = true;
+        try{ if(typeof unsub === 'function') unsub(); }catch(e){}
+        resolve(user || null);
+      };
+      const timer = setTimeout(() => finish(firebaseAuth.currentUser || null), timeoutMs);
+      try{
+        unsub = onAuthStateChanged(firebaseAuth, user => {
+          clearTimeout(timer);
+          finish(user || firebaseAuth.currentUser || null);
+        }, () => {
+          clearTimeout(timer);
+          finish(firebaseAuth.currentUser || null);
+        });
+      }catch(err){
+        clearTimeout(timer);
+        finish(firebaseAuth.currentUser || null);
+      }
+    });
+  }catch(err){
+    console.warn('Não foi possível esperar pelo utilizador Firebase:', err);
+    return (typeof firebaseAuth !== 'undefined' && firebaseAuth) ? (firebaseAuth.currentUser || null) : null;
+  }
+}
+
 async function syncBackupCollectionToFirebase(collectionName, items){
-  if(!Array.isArray(items)) return { upserts:0, deletes:0 };
+  if(!Array.isArray(items)) return { upserts:0, deletes:0, failures:0 };
   if(typeof ensureFirebaseReady !== 'function' || typeof getDocs !== 'function' || typeof collection !== 'function'){
-    return { upserts:0, deletes:0 };
+    return { upserts:0, deletes:0, failures:0 };
   }
   await ensureFirebaseReady();
-  if(typeof firebaseAuth !== 'undefined' && firebaseAuth && !firebaseAuth.currentUser){
-    console.warn('Sem login Firebase → backup não sincronizado para', collectionName);
-    return { upserts:0, deletes:0 };
+  const firebaseUser = await waitForFirebaseUser(6000);
+  if(!firebaseUser){
+    console.warn('Sem utilizador Firebase confirmado; vou tentar sincronizar diretamente para', collectionName);
   }
+
   const snap = await getDocs(collection(firestoreDb, collectionName));
   const remoteIds = new Set(snap.docs.map(docSnap => String(docSnap.id)));
   const nextIds = new Set();
   let upserts = 0;
   let deletes = 0;
+  let failures = 0;
 
   for(const rawItem of items){
     if(!rawItem || typeof rawItem !== 'object') continue;
@@ -3087,17 +3124,27 @@ async function syncBackupCollectionToFirebase(collectionName, items){
       item.id = `${collectionName}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
     }
     nextIds.add(String(item.id));
-    await upsertRemote(collectionName, item);
-    upserts += 1;
+    try{
+      await upsertRemote(collectionName, item);
+      upserts += 1;
+    }catch(err){
+      failures += 1;
+      console.error(`Falha ao sincronizar ${collectionName}/${item.id}:`, err);
+    }
   }
 
   for(const remoteId of remoteIds){
     if(!nextIds.has(remoteId)){
-      await removeRemote(collectionName, remoteId);
-      deletes += 1;
+      try{
+        await removeRemote(collectionName, remoteId);
+        deletes += 1;
+      }catch(err){
+        failures += 1;
+        console.error(`Falha ao apagar remoto ${collectionName}/${remoteId}:`, err);
+      }
     }
   }
-  return { upserts, deletes };
+  return { upserts, deletes, failures };
 }
 
 function extractImportArrays(data){
@@ -3162,7 +3209,7 @@ async function importBackupDataObject(data){
     const trabSync = await syncBackupCollectionToFirebase('trabalhos', trabalhos);
     const cliSync = await syncBackupCollectionToFirebase('clientes', clientes);
     const pagSync = await syncBackupCollectionToFirebase('pagamentos', pagamentos);
-    remoteSummary = ` Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
+    remoteSummary = ` Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.${((trabSync.failures||0)+(cliSync.failures||0)+(pagSync.failures||0)) ? ` Falhas: ${(trabSync.failures||0)+(cliSync.failures||0)+(pagSync.failures||0)}.` : ""}`;
     syncOk = true;
   }catch(err){
     console.error('Erro ao sincronizar backup para Firebase:', err);
