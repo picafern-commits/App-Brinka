@@ -3386,6 +3386,7 @@ function recalcLastTrabIdFromList(trabalhosLista){
   try{
     if(typeof window.lastTrabId !== 'undefined') window.lastTrabId = maxId;
     localStorage.setItem('lastTrabId', String(maxId));
+    localStorage.setItem('ge_last_trab_id', String(maxId));
   }catch(e){}
 }
 
@@ -3421,19 +3422,44 @@ async function syncBackupCollectionToFirebase(collectionName, items){
   return { upserts, deletes };
 }
 
+function extractImportArrays(data){
+  if(!data || typeof data !== 'object') return { trabalhos:[], clientes:[], pagamentos:[] };
+  const trabalhosRaw = Array.isArray(data.trabalhos) ? data.trabalhos : Array.isArray(data.ge_trabalhos) ? data.ge_trabalhos : [];
+  const clientesRaw = Array.isArray(data.clientes) ? data.clientes : Array.isArray(data.ge_clientes) ? data.ge_clientes : [];
+  const pagamentosRaw = Array.isArray(data.pagamentos) ? data.pagamentos : Array.isArray(data.ge_pagamentos) ? data.ge_pagamentos : [];
+  const trabalhos = trabalhosRaw.filter(item => item && typeof item === 'object').map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape({ ...item }) : { ...item });
+  const clientes = clientesRaw.filter(item => item && typeof item === 'object').map(item => ({ ...item }));
+  const pagamentos = pagamentosRaw.filter(item => item && typeof item === 'object').map(item => ({ ...item }));
+  return { trabalhos, clientes, pagamentos };
+}
+
 async function importBackupDataObject(data){
   if(!data || typeof data !== 'object'){
     alert('Backup inválido.');
     return;
   }
-  const novosTrabalhos = (Array.isArray(data.trabalhos) ? data.trabalhos : []).map(item => typeof normalizeTrabalhoStateShape === 'function' ? normalizeTrabalhoStateShape(item) : item);
-  const novosClientes = Array.isArray(data.clientes) ? data.clientes : [];
-  const novosPagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : [];
+
+  const imported = extractImportArrays(data);
+  const novosTrabalhos = imported.trabalhos;
+  const novosClientes = imported.clientes;
+  const novosPagamentos = imported.pagamentos;
+
+  if(!novosTrabalhos.length && !novosClientes.length && !novosPagamentos.length){
+    console.warn('Backup sem listas reconhecidas:', Object.keys(data || {}));
+    alert('O ficheiro foi lido mas não foram encontrados dados válidos em trabalhos, clientes ou pagamentos.');
+    return;
+  }
 
   const keys = (typeof STORAGE_KEYS === 'object' && STORAGE_KEYS) ? STORAGE_KEYS : { trabalhos:'ge_trabalhos', clientes:'ge_clientes', pagamentos:'ge_pagamentos', lastTrabId:'ge_last_trab_id' };
 
-  importInProgress = true;
-  try{ clearRealtimeListeners(); }catch(e){}
+  try{ if(typeof clearRealtimeListeners === 'function') clearRealtimeListeners(); }catch(e){}
+
+  trabalhos = novosTrabalhos;
+  clientes = novosClientes;
+  pagamentos = novosPagamentos;
+  window.trabalhos = novosTrabalhos;
+  window.clientes = novosClientes;
+  window.pagamentos = novosPagamentos;
 
   localStorage.setItem(keys.trabalhos, JSON.stringify(novosTrabalhos));
   localStorage.setItem(keys.clientes, JSON.stringify(novosClientes));
@@ -3442,45 +3468,30 @@ async function importBackupDataObject(data){
   localStorage.setItem('clientes', JSON.stringify(novosClientes));
   localStorage.setItem('pagamentos', JSON.stringify(novosPagamentos));
 
-  try{ trabalhos = novosTrabalhos; }catch(e){}
-  try{ clientes = novosClientes; }catch(e){}
-  try{ pagamentos = novosPagamentos; }catch(e){}
-  try{ window.trabalhos = novosTrabalhos; }catch(e){}
-  try{ window.clientes = novosClientes; }catch(e){}
-  try{ window.pagamentos = novosPagamentos; }catch(e){}
-
   recalcLastTrabIdFromList(novosTrabalhos);
-  try{ saveLocal(); }catch(e){}
-
-  try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
-  try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
-  try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
-  try { if(typeof renderDashboard === 'function') renderDashboard(); } catch(e){}
-  try { if(typeof renderRelatorios === 'function') { renderRelatorios(); try{ renderAdvancedReports(); }catch(e){} } } catch(e){}
-  try { if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); } catch(e){}
+  try{ if(typeof saveLocal === 'function') saveLocal(); }catch(e){}
+  try{ if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); }catch(e){}
 
   let remoteSummary = '';
   try{
     const trabSync = await syncBackupCollectionToFirebase('trabalhos', novosTrabalhos);
     const cliSync = await syncBackupCollectionToFirebase('clientes', novosClientes);
     const pagSync = await syncBackupCollectionToFirebase('pagamentos', novosPagamentos);
-    remoteSummary = `
-Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
+    remoteSummary = ` Firebase: ${trabSync.upserts} trabalhos, ${cliSync.upserts} clientes e ${pagSync.upserts} pagamentos sincronizados.`;
   }catch(err){
     console.error('Erro ao sincronizar backup para Firebase:', err);
-    alert('Backup importado localmente, mas houve erro a sincronizar com a Firebase.');
-  } finally {
-    importInProgress = false;
-    try{ attachRealtimeListeners(); }catch(e){}
-    setTimeout(() => {
-      try { if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); } catch(e){}
-      try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
-      try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
-      try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
-    }, 500);
+    remoteSummary = ' Importado localmente, mas houve erro a sincronizar com a Firebase.';
   }
 
-  alert(`Backup importado com sucesso.${remoteSummary}`);
+  try{ if(typeof attachRealtimeListeners === 'function') attachRealtimeListeners(); }catch(e){}
+  try{ if(typeof refreshVisibleViews === 'function') refreshVisibleViews(); }catch(e){}
+  try { if(typeof renderTrabalhos === 'function') renderTrabalhos(); } catch(e){}
+  try { if(typeof renderClientes === 'function') renderClientes(); } catch(e){}
+  try { if(typeof renderPagamentos === 'function') renderPagamentos(); } catch(e){}
+  try { if(typeof renderDashboard === 'function') renderDashboard(); } catch(e){}
+  try { if(typeof renderRelatorios === 'function') { renderRelatorios(); try{ renderAdvancedReports(); }catch(e){} } } catch(e){}
+
+  alert(`Backup importado com sucesso. Trabalhos: ${novosTrabalhos.length}, Clientes: ${novosClientes.length}, Pagamentos: ${novosPagamentos.length}.${remoteSummary}`);
 }
 
 function importBackupFile(event){
@@ -3489,14 +3500,22 @@ function importBackupFile(event){
   const reader = new FileReader();
   reader.onload = async function(e){
     try{
-      const data = JSON.parse(e.target.result);
+      const raw = String(e && e.target ? e.target.result || '' : '');
+      const data = JSON.parse(raw);
       await importBackupDataObject(data);
-      if(event.target) event.target.value = '';
     }catch(err){
+      console.error('Erro ao importar backup:', err);
       alert('Não foi possível ler o backup.');
+    }finally{
+      if(event && event.target) event.target.value = '';
     }
   };
-  reader.readAsText(file);
+  reader.onerror = function(err){
+    console.error('Erro FileReader backup:', err);
+    if(event && event.target) event.target.value = '';
+    alert('Não foi possível ler o ficheiro selecionado.');
+  };
+  reader.readAsText(file, 'utf-8');
 }
 
 function runWeeklyAutomaticBackupSilently(){
@@ -4100,7 +4119,6 @@ let managedUsersCache = [];
 const ROLE_COLLECTION = 'user_roles';
 const MASTER_EMAILS = ['pica.fern@gmail.com'];
 let trabalhos = [], clientes = [], pagamentos = [];
-let importInProgress = false;
 let lastTrabId = 0;
 
 let firebaseApp = null;
@@ -5072,7 +5090,6 @@ function attachRealtimeListeners(){
   if (!firestoreDb || unsubs.length) return;
   const bind = (name, setter) => {
     const unsub = onSnapshot(collection(firestoreDb, name), snap => {
-      if (importInProgress) return;
       const rows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setter(rows);
       saveLocal();
