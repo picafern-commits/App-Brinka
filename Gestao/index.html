@@ -3107,22 +3107,20 @@ async function waitForFirebaseUser(timeoutMs = 15000){
 
 async function syncBackupCollectionToFirebase(collectionName, items){
   if(!Array.isArray(items)) return { upserts:0, deletes:0, failures:0, skipped:false, reason:'' };
-  const ensureReady = window.ensureFirebaseReady;
+  const ensureReady = window.ensureFirebaseReady || window.ensureFirebaseCore || null;
+  if(typeof ensureReady === 'function'){
+    try{ await ensureReady(); }catch(e){ console.warn('Falha ao preparar Firebase para import:', e); }
+  }
   const getDocsFn = window.getDocs;
   const collectionFn = window.collection;
   const writeBatchFn = window.writeBatch;
   const docFn = window.doc;
   const dbObj = window.firestoreDb;
-  if(typeof ensureReady !== 'function' || typeof getDocsFn !== 'function' || typeof collectionFn !== 'function' || typeof writeBatchFn !== 'function' || typeof docFn !== 'function' || !dbObj){
+  if(typeof getDocsFn !== 'function' || typeof collectionFn !== 'function' || typeof writeBatchFn !== 'function' || typeof docFn !== 'function' || !dbObj){
     return { upserts:0, deletes:0, failures:0, skipped:true, reason:'firebase-api-indisponivel' };
   }
 
-  await ensureReady();
-  const firebaseUser = await waitForFirebaseUser(15000);
-  if(!firebaseUser){
-    console.warn('Import sem sessão Firebase pronta em', collectionName);
-    return { upserts:0, deletes:0, failures:0, skipped:true, reason:'sem-sessao' };
-  }
+  try{ await waitForFirebaseUser(4000); }catch(e){}
 
   const normalized = [];
   for(const rawItem of items){
@@ -3992,6 +3990,7 @@ async function ensureFirebaseCore(){
     window.firebaseApp = firebaseApp;
     window.firebaseAuth = firebaseAuth;
     window.firestoreDb = firestoreDb;
+    window.ensureFirebaseCore = ensureFirebaseCore;
     window.onAuthStateChanged = onAuthStateChanged;
     window.getDocs = getDocs;
     window.collection = collection;
