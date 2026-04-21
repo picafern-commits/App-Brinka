@@ -7624,7 +7624,7 @@ $('userManagerForm')?.addEventListener('submit', async (e) => {
 
   try{
     await ensureFirebaseCore();
-    await setDoc(doc(firestoreDb, ROLE_COLLECTION, email), {
+    const payload = {
       nome,
       displayName: nome,
       email,
@@ -7632,25 +7632,45 @@ $('userManagerForm')?.addEventListener('submit', async (e) => {
       pcMode,
       mobileMode,
       updatedAt: new Date().toISOString()
-    }, { merge:true });
-    await loadManagedUsersFromFirestore();
+    };
+    await setDoc(doc(firestoreDb, ROLE_COLLECTION, email), payload, { merge:true });
+
+    const localUsers = getManagedUsers().filter(u => normalizeRoleEmail(u.email || u.username) !== email);
+    localUsers.push({
+      nome,
+      displayName: nome,
+      email,
+      username: email,
+      role,
+      pcMode,
+      mobileMode
+    });
+    saveManagedUsers(localUsers);
+
     $('userManagerForm').reset();
     if($('managedDisplayName')) $('managedDisplayName').value = '';
     $('managedUserIndex').value = '';
     $('managedRole').value = 'user';
     if($('managedPcMode')) $('managedPcMode').value = 'edit';
     if($('managedMobileMode')) $('managedMobileMode').value = 'edit';
-    renderManagedUsers();
+
+    await renderManagedUsers();
     updateWorkCodePreview();
     updateWorkCodePreview();
     renderMobileCards();
+
     if(currentUserEmail && currentUserEmail === email){
       currentRole = role;
       currentUsername = String(nome || email.split('@')[0] || currentUsername || 'Utilizador').trim();
+      const currentUserNameEl = $('currentUserName');
+      if(currentUserNameEl) currentUserNameEl.textContent = currentUsername;
       setRoleUI();
-      try{ updatePresenceState(true); }catch(e) {}
+      try{ await updatePresenceState(true); }catch(e) {}
       try{ renderOnlineUsersCard(); }catch(e) {}
       renderAll();
+      alert('Nome e role atualizados com sucesso.');
+    } else {
+      alert('Role guardada com sucesso.');
     }
   }catch(err){
     console.error('Erro ao guardar role:', err);
