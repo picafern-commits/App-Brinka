@@ -4066,11 +4066,11 @@ async function fetchRoleForUser(user){
 }
 async function fetchRoleProfileForUser(user){
   const email = normalizeRoleEmail(user?.email);
-  const baseProfile = { role:'user', pcMode:'edit', mobileMode:'edit' };
+  const baseProfile = { role:'user', pcMode:'edit', mobileMode:'edit', nome:'', displayName:'' };
   if(!email) return baseProfile;
   if(isMasterEmail(email)){
     await ensureRoleSeed(email, 'master_admin');
-    return { role:'master_admin', pcMode:'edit', mobileMode:'edit' };
+    return { role:'master_admin', pcMode:'edit', mobileMode:'edit', nome:'', displayName:'' };
   }
   if(!firestoreDb) return baseProfile;
   try{
@@ -4078,6 +4078,8 @@ async function fetchRoleProfileForUser(user){
     if(snap.exists()){
       const data = snap.data() || {};
       return {
+        nome: String(data.nome || data.displayName || '').trim(),
+        displayName: String(data.displayName || data.nome || '').trim(),
         role: normalizeRoleValue(data.role),
         pcMode: normalizeAccessMode(data.pcMode),
         mobileMode: normalizeAccessMode(data.mobileMode)
@@ -4196,7 +4198,7 @@ async function updatePresenceState(isOnline = true){
     const email = normalizeRoleEmail(currentUser.email || currentUserEmail);
     const payload = {
       email: email || '',
-      username: String(currentUsername || deriveLoginUsername(currentUser) || 'Utilizador'),
+      username: String(currentUsername || deriveLoginUsername(currentUser) || 'Utilizador').trim(),
       role: normalizeRoleValue(currentRole || 'user'),
       isOnline: !!isOnline,
       updatedAt: Date.now(),
@@ -4263,7 +4265,7 @@ async function applyAuthenticatedSession(user){
   const role = normalizeRoleValue(profile?.role);
   currentDeviceType = detectCurrentDeviceType();
   currentAccessMode = normalizeAccessMode(currentDeviceType === 'mobile' ? profile?.mobileMode : profile?.pcMode);
-  const username = deriveLoginUsername(user);
+  const username = String(profile?.nome || profile?.displayName || deriveLoginUsername(user) || 'Utilizador').trim();
   currentUserEmail = normalizeRoleEmail(user?.email);
   if(window.showApp) window.showApp();
   const loginError = $('loginError');
