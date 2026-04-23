@@ -12,10 +12,11 @@
 window.BRINKA_FIREBASE_ENABLED = false;
 
 window.BRINKA_FIREBASE_CONFIG = {
-  apiKey: "COLOCA_AQUI",
-  authDomain: "COLOCA_AQUI.firebaseapp.com",
-  projectId: "COLOCA_AQUI",
-  storageBucket: "COLOCA_AQUI.appspot.com",
-  messagingSenderId: "COLOCA_AQUI",
-  appId: "COLOCA_AQUI"
+  apiKey: "AIzaSyCxdAnxDKikfKyzAvV9RHxOk-FyJbgCqa0",
+  authDomain: "app-brinka.firebaseapp.com",
+  projectId: "app-brinka",
+  storageBucket: "app-brinka.firebasestorage.app",
+  messagingSenderId: "1030667180151",
+  appId: "1:1030667180151:web:a97f74baa1471220be8e72"
 };
+
