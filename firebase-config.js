@@ -1,21 +1,21 @@
 /*
-  Brinka Web — Firebase opcional
+  BRINKA — FIREBASE MULTI-DISPOSITIVO
 
-  A app funciona já em modo localStorage.
-  Para sincronizar entre PC e iPhone:
-  1. Cria projeto Firebase
-  2. Ativa Firestore Database
-  3. Cola aqui a configuração da tua app web
-  4. Muda BRINKA_FIREBASE_ENABLED para true
+  1) Vai ao Firebase
+  2) Cria projeto
+  3) Ativa Firestore Database
+  4) Project settings > Your apps > Web app
+  5) Copia a config para aqui
+  6) Muda BRINKA_FIREBASE_ENABLED para true
 */
 
 window.BRINKA_FIREBASE_ENABLED = false;
 
 window.BRINKA_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCxdAnxDKikfKyzAvV9RHxOk-FyJbgCqa0",
-  authDomain: "app-brinka.firebaseapp.com",
-  projectId: "app-brinka",
-  storageBucket: "app-brinka.firebasestorage.app",
-  messagingSenderId: "1030667180151",
-  appId: "1:1030667180151:web:a97f74baa1471220be8e72"
+  apiKey: "COLOCA_AQUI",
+  authDomain: "COLOCA_AQUI.firebaseapp.com",
+  projectId: "COLOCA_AQUI",
+  storageBucket: "COLOCA_AQUI.appspot.com",
+  messagingSenderId: "COLOCA_AQUI",
+  appId: "COLOCA_AQUI"
 };
