@@ -15,6 +15,37 @@
   <link rel="apple-touch-icon" href="assets/brinka-logo.png" />
 </head>
 <body>
+
+  <section class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-brand">
+        <img src="assets/brinka-logo.png" alt="Brinka" onerror="this.style.display='none'" />
+        <div>
+          <h1>Brinka</h1>
+          <p>Fecho de Caixa Premium</p>
+        </div>
+      </div>
+
+      <div class="login-box">
+        <p class="eyebrow">Acesso seguro</p>
+        <h2>Entrar na app</h2>
+
+        <label class="wide-label">
+          <span>Email</span>
+          <input id="loginEmail" type="email" placeholder="email@loja.com" autocomplete="email" />
+        </label>
+
+        <label class="wide-label">
+          <span>Password</span>
+          <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" />
+        </label>
+
+        <button class="primary-btn full" id="loginBtn" type="button">Entrar</button>
+        <p class="login-error" id="loginError"></p>
+      </div>
+    </div>
+  </section>
+
   <div class="app-bg"></div>
 
   <div class="app-layout">
@@ -55,7 +86,9 @@
         </div>
 
         <div class="top-actions">
+          <div class="user-badge" id="userBadge">—</div>
           <button class="soft-btn" id="themeBtn">Tema</button>
+          <button class="soft-btn" id="logoutBtn">Sair</button>
           <button class="primary-btn" data-page="fecho">+ Novo fecho</button>
         </div>
       </header>
@@ -106,8 +139,8 @@
                 </div>
 
                 <div class="form-grid">
-                  <label><span>Utilizador</span><input id="operator" type="text" placeholder="Ex: Carolina" /></label>
-                  <label><span>Loja / Balcão</span><input id="store" type="text" placeholder="Ex: Brinka Braga" /></label>
+                  <label><span>Utilizador</span><input id="operator" type="text" placeholder="Ex: Ricardo" /></label>
+                  <label><span>Loja</span><select id="store"></select></label>
                   <label><span>Valor esperado</span><input id="expected" type="number" step="0.01" min="0" placeholder="0.00" /></label>
                   <label><span>Data</span><input id="closeDate" type="datetime-local" /></label>
                 </div>
@@ -196,6 +229,7 @@
           <div class="panel-grid">
             <article class="panel">
               <div class="panel-title"><h3>Configurações gerais</h3></div>
+              <label class="wide-label"><span>Loja ativa / separação de dados</span><select id="activeStore"></select></label>
               <label class="wide-label"><span>Nome da loja por defeito</span><input id="defaultStore" type="text" placeholder="Ex: Brinka Braga" /></label>
               <label class="wide-label"><span>Valor esperado por defeito</span><input id="defaultExpected" type="number" step="0.01" min="0" placeholder="0.00" /></label>
               <button class="primary-btn full" id="saveSettings">Guardar configurações</button>
@@ -204,7 +238,8 @@
             <article class="panel">
               <div class="panel-title"><h3>Estado Firebase</h3></div>
               <p class="muted" id="firebaseInfo">A app tenta usar Firebase. Se não tiveres config válida, fica em modo local.</p>
-              <div class="code-box">Coleção Firestore: brinka_fechos</div>
+              <div class="code-box" id="roleInfo">Role: —</div>
+              <div class="code-box">Coleção: brinka_lojas / loja / fechos</div>
               <div class="code-box">Configura em: firebase-config.js</div>
             </article>
           </div>

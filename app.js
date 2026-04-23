@@ -1,48 +1,48 @@
-
 /* iPhone app total: bloquear zoom/double tap e manter só scroll vertical */
 let brinkaLastTouchEnd = 0;
 
 document.addEventListener("touchend", function (event) {
   const now = Date.now();
-  if (now - brinkaLastTouchEnd <= 300) {
-    event.preventDefault();
-  }
+  if (now - brinkaLastTouchEnd <= 300) event.preventDefault();
   brinkaLastTouchEnd = now;
 }, { passive: false });
 
-document.addEventListener("gesturestart", function (event) {
-  event.preventDefault();
-}, { passive: false });
-
-document.addEventListener("gesturechange", function (event) {
-  event.preventDefault();
-}, { passive: false });
-
-document.addEventListener("gestureend", function (event) {
-  event.preventDefault();
-}, { passive: false });
-
+document.addEventListener("gesturestart", event => event.preventDefault(), { passive: false });
+document.addEventListener("gesturechange", event => event.preventDefault(), { passive: false });
+document.addEventListener("gestureend", event => event.preventDefault(), { passive: false });
 document.addEventListener("touchmove", function (event) {
-  if (event.touches && event.touches.length > 1) {
-    event.preventDefault();
-  }
+  if (event.touches && event.touches.length > 1) event.preventDefault();
 }, { passive: false });
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, setDoc,
+  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, getDoc,
   serverTimestamp, query, orderBy, onSnapshot, enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const noteValues = [500, 200, 100, 50, 20, 10, 5];
 const coinValues = [2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01];
 
+const storeProfiles = [
+  { id: "loja_1", name: "Loja 1" },
+  { id: "loja_2", name: "Loja 2" },
+  { id: "loja_3", name: "Loja 3" },
+  { id: "loja_4", name: "Loja 4" }
+];
+
 const state = {
   closures: [],
-  settings: { defaultStore: "Brinka", defaultExpected: "", theme: "dark" },
+  settings: { activeStoreId: "loja_1", defaultStore: "Loja 1", defaultExpected: "", theme: "dark" },
   db: null,
+  auth: null,
   firebase: false,
-  unsubscribe: null
+  unsubscribe: null,
+  user: null,
+  profile: null,
+  appStarted: false
 };
 
 const $ = (id) => document.getElementById(id);
@@ -79,17 +79,38 @@ function hasValidFirebaseConfig() {
   );
 }
 
+function isAdmin() {
+  return state.profile?.role === "admin";
+}
+
+function getActiveStoreId() {
+  if (isAdmin()) return state.settings.activeStoreId || "loja_1";
+  return state.profile?.lojaId || "loja_1";
+}
+
+function getActiveStoreName() {
+  return storeProfiles.find(store => store.id === getActiveStoreId())?.name || "Loja 1";
+}
+
+function fechosCollection(db = state.db) {
+  return collection(db, "brinka_lojas", getActiveStoreId(), "fechos");
+}
+
+function backupDocRef(key) {
+  return doc(state.db, "brinka_lojas", getActiveStoreId(), "backups_diarios", key);
+}
+
 function loadLocal() {
-  state.closures = JSON.parse(localStorage.getItem("brinka_firebase_closures") || "[]");
   state.settings = {
     ...state.settings,
-    ...JSON.parse(localStorage.getItem("brinka_firebase_settings") || "{}")
+    ...JSON.parse(localStorage.getItem("brinka_roles_settings") || "{}")
   };
+  state.closures = JSON.parse(localStorage.getItem(`brinka_roles_closures_${getActiveStoreId()}`) || "[]");
 }
 
 function saveLocal() {
-  localStorage.setItem("brinka_firebase_closures", JSON.stringify(state.closures));
-  localStorage.setItem("brinka_firebase_settings", JSON.stringify(state.settings));
+  localStorage.setItem(`brinka_roles_closures_${getActiveStoreId()}`, JSON.stringify(state.closures));
+  localStorage.setItem("brinka_roles_settings", JSON.stringify(state.settings));
 }
 
 function todayKey() {
@@ -104,8 +125,10 @@ async function createDailyBackup(reason = "auto") {
   const total = state.closures.reduce((sum, item) => sum + Number(item.total || 0), 0);
   const diff = state.closures.reduce((sum, item) => sum + Number(item.diff || 0), 0);
 
-  await setDoc(doc(state.db, "brinka_backups_diarios", key), {
+  await setDoc(backupDocRef(key), {
     date: key,
+    lojaId: getActiveStoreId(),
+    lojaNome: getActiveStoreName(),
     reason,
     updatedAt: serverTimestamp(),
     totalFechos: state.closures.length,
@@ -114,27 +137,27 @@ async function createDailyBackup(reason = "auto") {
     closures: state.closures
   }, { merge: true });
 
-  localStorage.setItem("brinka_last_backup_day", key);
+  localStorage.setItem(`brinka_last_backup_day_${getActiveStoreId()}`, key);
 }
 
 async function ensureDailyBackup() {
   if (!state.firebase) return;
   const key = todayKey();
-  const last = localStorage.getItem("brinka_last_backup_day");
-  if (last !== key) {
-    await createDailyBackup("daily_auto");
-  }
+  const last = localStorage.getItem(`brinka_last_backup_day_${getActiveStoreId()}`);
+  if (last !== key) await createDailyBackup("daily_auto");
 }
 
-async function initFirebase() {
+async function initFirebaseCore() {
   if (!hasValidFirebaseConfig()) {
-    setStatus("local", "Modo local", "Firebase sem config válida");
-    return;
+    setStatus("error", "Firebase sem config", "Login precisa de Firebase");
+    if ($("loginError")) $("loginError").textContent = "Firebase não está configurado.";
+    return false;
   }
 
   try {
     const app = initializeApp(window.BRINKA_FIREBASE_CONFIG);
     state.db = getFirestore(app);
+    state.auth = getAuth(app);
 
     try {
       await enableIndexedDbPersistence(state.db);
@@ -143,25 +166,69 @@ async function initFirebase() {
     }
 
     state.firebase = true;
-    setStatus("online", "Firebase ativo", "Sincronização em tempo real");
-
-    const q = query(collection(state.db, "brinka_fechos"), orderBy("createdAt", "desc"));
-    state.unsubscribe = onSnapshot(q, async (snapshot) => {
-      state.closures = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      saveLocal();
-      renderAll();
-      setStatus("online", "Firebase ativo", "Dados sincronizados");
-      try { await ensureDailyBackup(); } catch (e) { console.warn("Backup diário falhou:", e); }
-    }, (error) => {
-      console.error(error);
-      setStatus("error", "Erro Firebase", "A usar cópia local");
-    });
-
+    return true;
   } catch (error) {
     console.error(error);
-    state.firebase = false;
     setStatus("error", "Erro Firebase", "Verifica firebase-config.js");
+    if ($("loginError")) $("loginError").textContent = "Erro a iniciar Firebase.";
+    return false;
   }
+}
+
+async function readUserProfile(user) {
+  const ref = doc(state.db, "users", user.uid);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await signOut(state.auth);
+    throw new Error("Este utilizador não tem perfil criado na coleção users.");
+  }
+
+  const profile = snap.data();
+  if (!profile.role) profile.role = "user";
+  if (!profile.lojaId) profile.lojaId = "loja_1";
+  return profile;
+}
+
+function showLogin(show) {
+  if ($("loginScreen")) $("loginScreen").classList.toggle("hidden", !show);
+}
+
+function renderUserBadge() {
+  const name = state.profile?.nome || state.user?.email || "Utilizador";
+  const role = state.profile?.role || "user";
+  const loja = isAdmin() ? `Admin · ${getActiveStoreName()}` : getActiveStoreName();
+
+  if ($("userBadge")) {
+    $("userBadge").innerHTML = `<span class="role-${role}">${name}</span>&nbsp;· ${loja}`;
+  }
+
+  if ($("roleInfo")) {
+    $("roleInfo").textContent = `Role: ${role} · Loja: ${loja}`;
+  }
+}
+
+async function startStoreListener() {
+  if (state.unsubscribe) {
+    state.unsubscribe();
+    state.unsubscribe = null;
+  }
+
+  if (!state.firebase || !state.db || !state.user) return;
+
+  setStatus("online", "Firebase ativo", `A carregar ${getActiveStoreName()}...`);
+
+  const q = query(fechosCollection(), orderBy("createdAt", "desc"));
+  state.unsubscribe = onSnapshot(q, async (snapshot) => {
+    state.closures = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    saveLocal();
+    renderAll();
+    setStatus("online", "Firebase ativo", `Dados sincronizados · ${getActiveStoreName()}`);
+    try { await ensureDailyBackup(); } catch (e) { console.warn("Backup diário falhou:", e); }
+  }, (error) => {
+    console.error(error);
+    setStatus("error", "Erro Firebase", "Sem permissão ou regras incorretas");
+  });
 }
 
 function setNowDate() {
@@ -245,6 +312,11 @@ function getStatus(diff) {
 }
 
 async function saveClosure() {
+  if (!state.user) {
+    toast("Tens de fazer login");
+    return;
+  }
+
   const calc = calculate();
 
   if (calc.total <= 0) {
@@ -258,8 +330,13 @@ async function saveClosure() {
     localId: makeId(),
     dateIso,
     dateLabel: new Date(dateIso).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }),
-    store: $("store")?.value.trim() || state.settings.defaultStore || "Brinka",
-    operator: $("operator")?.value.trim() || "Sem utilizador",
+    lojaId: getActiveStoreId(),
+    storeId: getActiveStoreId(),
+    store: getActiveStoreName(),
+    operator: state.profile?.nome || state.user.email || "Sem utilizador",
+    operatorUid: state.user.uid,
+    operatorEmail: state.user.email,
+    role: state.profile?.role || "user",
     expected: calc.expected,
     diff: calc.diff,
     total: calc.total,
@@ -271,29 +348,19 @@ async function saveClosure() {
   };
 
   try {
-    if (state.firebase) {
-      await addDoc(collection(state.db, "brinka_fechos"), { ...item, createdAt: serverTimestamp() });
-      toast("Fecho guardado e sincronizado");
-      setTimeout(() => createDailyBackup("after_save").catch(console.warn), 500);
-    } else {
-      state.closures.unshift(item);
-      saveLocal();
-      renderAll();
-      toast("Fecho guardado localmente");
-    }
+    await addDoc(fechosCollection(), { ...item, createdAt: serverTimestamp() });
+    toast("Fecho guardado e sincronizado");
+    setTimeout(() => createDailyBackup("after_save").catch(console.warn), 500);
     clearForm(false);
   } catch (error) {
     console.error(error);
-    state.closures.unshift(item);
-    saveLocal();
-    renderAll();
-    toast("Firebase falhou, guardado local");
+    toast("Erro ao guardar. Verifica regras Firebase.");
   }
 }
 
 function clearForm(show = true) {
   document.querySelectorAll(".money-row input").forEach(input => input.value = "");
-  if ($("store")) $("store").value = state.settings.defaultStore || "Brinka";
+  if ($("store")) $("store").value = getActiveStoreId();
   if ($("expected")) $("expected").value = state.settings.defaultExpected || "";
   if ($("obs")) $("obs").value = "";
   setNowDate();
@@ -302,22 +369,16 @@ function clearForm(show = true) {
 }
 
 async function deleteClosure(id) {
+  if (!state.user) return;
+
   try {
-    if (state.firebase && id) {
-      await deleteDoc(doc(state.db, "brinka_fechos", id));
-      setTimeout(() => createDailyBackup("after_delete").catch(console.warn), 500);
-      toast("Fecho apagado no Firebase");
-      return;
-    }
+    await deleteDoc(doc(state.db, "brinka_lojas", getActiveStoreId(), "fechos", id));
+    setTimeout(() => createDailyBackup("after_delete").catch(console.warn), 500);
+    toast("Fecho apagado");
   } catch (error) {
     console.error(error);
-    toast("Erro ao apagar no Firebase");
+    toast("Erro ao apagar. Verifica permissões.");
   }
-
-  state.closures = state.closures.filter(item => (item.id || item.localId) !== id);
-  saveLocal();
-  renderAll();
-  toast("Fecho apagado localmente");
 }
 
 function renderDashboard() {
@@ -331,7 +392,7 @@ function renderDashboard() {
 
   if ($("todayTotal")) $("todayTotal").textContent = eur(todayTotal);
   if ($("todayDiff")) $("todayDiff").textContent = eur(todayDiff);
-  if ($("todaySubtitle")) $("todaySubtitle").textContent = todayItems.length ? `${todayItems.length} fecho(s) hoje` : "Sem fechos hoje";
+  if ($("todaySubtitle")) $("todaySubtitle").textContent = todayItems.length ? `${todayItems.length} fecho(s) hoje · ${getActiveStoreName()}` : `Sem fechos hoje · ${getActiveStoreName()}`;
   if ($("totalClosures")) $("totalClosures").textContent = state.closures.length;
   if ($("lastClosure")) $("lastClosure").textContent = state.closures[0]?.dateLabel || "—";
   if ($("bestClosure")) $("bestClosure").textContent = eur(best);
@@ -341,10 +402,10 @@ function renderDashboard() {
   if ($("recentClosures")) {
     $("recentClosures").innerHTML = state.closures.slice(0, 6).map(item => `
       <div class="list-item">
-        <div><strong>${eur(item.total)}</strong><br><span class="muted">${item.dateLabel} · ${item.store || "Brinka"}</span></div>
+        <div><strong>${eur(item.total)}</strong><br><span class="muted">${item.dateLabel} · ${item.operator || "Sem utilizador"}</span></div>
         <div style="text-align:right"><b>${getStatus(item.diff)}</b><br><span class="muted">${eur(item.diff)}</span></div>
       </div>
-    `).join("") || `<p class="muted">Ainda não existem fechos guardados.</p>`;
+    `).join("") || `<p class="muted">Ainda não existem fechos guardados nesta loja.</p>`;
   }
 }
 
@@ -364,7 +425,7 @@ function renderHistory() {
     return `
       <tr>
         <td>${item.dateLabel || "—"}</td>
-        <td>${item.store || "—"}</td>
+        <td>${item.store || getActiveStoreName()}</td>
         <td>${item.operator || "—"}</td>
         <td><b>${eur(item.total)}</b></td>
         <td>${eur(item.expected)}</td>
@@ -391,17 +452,38 @@ function renderReports() {
   if ($("reportList")) {
     $("reportList").innerHTML = state.closures.slice(0, 10).map(item => `
       <div class="list-item">
-        <div><strong>${item.store || "Brinka"}</strong><br><span class="muted">${item.dateLabel} · ${item.operator || "Sem utilizador"}</span></div>
+        <div><strong>${getActiveStoreName()}</strong><br><span class="muted">${item.dateLabel} · ${item.operator || "Sem utilizador"}</span></div>
         <div style="text-align:right"><b>${eur(item.total)}</b><br><span class="muted">${eur(item.diff)}</span></div>
       </div>
-    `).join("") || `<p class="muted">Sem dados para relatório.</p>`;
+    `).join("") || `<p class="muted">Sem dados para relatório nesta loja.</p>`;
+  }
+}
+
+function populateStoreSelects() {
+  const activeSelect = $("activeStore");
+  const storeSelect = $("store");
+  const options = storeProfiles.map(store => `<option value="${store.id}">${store.name}</option>`).join("");
+
+  if (activeSelect) {
+    activeSelect.innerHTML = options;
+    activeSelect.value = getActiveStoreId();
+    activeSelect.disabled = !isAdmin();
+  }
+
+  if (storeSelect) {
+    storeSelect.innerHTML = options;
+    storeSelect.value = getActiveStoreId();
+    storeSelect.disabled = !isAdmin();
   }
 }
 
 function renderSettings() {
-  if ($("defaultStore")) $("defaultStore").value = state.settings.defaultStore || "";
+  populateStoreSelects();
+  if ($("defaultStore")) $("defaultStore").value = getActiveStoreName();
+  if ($("defaultStore")) $("defaultStore").disabled = true;
   if ($("defaultExpected")) $("defaultExpected").value = state.settings.defaultExpected || "";
   document.body.classList.toggle("light", state.settings.theme === "light");
+  renderUserBadge();
 }
 
 function renderAll() {
@@ -431,11 +513,25 @@ function switchPage(page) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
+async function changeActiveStore(storeId) {
+  if (!isAdmin()) {
+    toast("Só admin pode trocar de loja");
+    populateStoreSelects();
+    return;
+  }
+
+  state.settings.activeStoreId = storeId || "loja_1";
+  state.settings.defaultStore = getActiveStoreName();
+  saveLocal();
+  state.closures = JSON.parse(localStorage.getItem(`brinka_roles_closures_${getActiveStoreId()}`) || "[]");
+  renderAll();
+  await startStoreListener();
+  toast(`Loja ativa: ${getActiveStoreName()}`);
+}
+
 function saveSettings() {
-  state.settings.defaultStore = $("defaultStore")?.value.trim() || "Brinka";
   state.settings.defaultExpected = $("defaultExpected")?.value || "";
   saveLocal();
-  if ($("store")) $("store").value = state.settings.defaultStore;
   if ($("expected")) $("expected").value = state.settings.defaultExpected;
   calculate();
   renderAll();
@@ -452,9 +548,44 @@ function exportCsv() {
   const blob = new Blob([[header.join(";"), ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = "brinka-historico.csv";
+  link.download = `brinka-${getActiveStoreId()}-historico.csv`;
   link.click();
   URL.revokeObjectURL(link.href);
+}
+
+async function doLogin() {
+  const email = $("loginEmail")?.value.trim();
+  const password = $("loginPassword")?.value;
+
+  if (!email || !password) {
+    $("loginError").textContent = "Mete email e password.";
+    return;
+  }
+
+  $("loginError").textContent = "A entrar...";
+
+  try {
+    await signInWithEmailAndPassword(state.auth, email, password);
+  } catch (error) {
+    console.error(error);
+    $("loginError").textContent = "Login inválido ou sem permissão.";
+  }
+}
+
+async function doLogout() {
+  try {
+    if (state.unsubscribe) state.unsubscribe();
+    state.unsubscribe = null;
+    await signOut(state.auth);
+    state.user = null;
+    state.profile = null;
+    state.closures = [];
+    renderAll();
+    showLogin(true);
+    setStatus("local", "Sessão terminada", "Faz login para sincronizar");
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function bindEvents() {
@@ -476,6 +607,10 @@ function bindEvents() {
     renderSettings();
   });
 
+  if ($("logoutBtn")) $("logoutBtn").addEventListener("click", doLogout);
+  if ($("loginBtn")) $("loginBtn").addEventListener("click", doLogin);
+  if ($("loginPassword")) $("loginPassword").addEventListener("keydown", e => { if (e.key === "Enter") doLogin(); });
+
   if ($("expected")) $("expected").addEventListener("input", calculate);
   if ($("saveClosure")) $("saveClosure").addEventListener("click", saveClosure);
   if ($("clearForm")) $("clearForm").addEventListener("click", () => clearForm(true));
@@ -483,6 +618,9 @@ function bindEvents() {
   if ($("statusFilter")) $("statusFilter").addEventListener("change", renderHistory);
   if ($("saveSettings")) $("saveSettings").addEventListener("click", saveSettings);
   if ($("exportCsv")) $("exportCsv").addEventListener("click", exportCsv);
+
+  if ($("store")) $("store").addEventListener("change", () => changeActiveStore($("store").value));
+  if ($("activeStore")) $("activeStore").addEventListener("change", () => changeActiveStore($("activeStore").value));
 
   if ($("clearHistory")) $("clearHistory").addEventListener("click", () => {
     if (!confirm("Apagar apenas a cópia local? No Firebase os dados continuam.")) return;
@@ -493,24 +631,58 @@ function bindEvents() {
   });
 }
 
+async function afterLogin(user) {
+  state.user = user;
+  try {
+    state.profile = await readUserProfile(user);
+
+    if (!isAdmin()) {
+      state.settings.activeStoreId = state.profile.lojaId || "loja_1";
+    } else {
+      state.settings.activeStoreId = state.settings.activeStoreId || state.profile.lojaId || "loja_1";
+    }
+
+    state.settings.defaultStore = getActiveStoreName();
+    saveLocal();
+
+    if ($("operator")) $("operator").value = state.profile.nome || user.email || "";
+    if ($("store")) $("store").value = getActiveStoreId();
+
+    showLogin(false);
+    renderAll();
+    await startStoreListener();
+    toast(`Bem-vindo, ${state.profile.nome || user.email}`);
+  } catch (error) {
+    console.error(error);
+    if ($("loginError")) $("loginError").textContent = error.message || "Perfil não encontrado.";
+    showLogin(true);
+  }
+}
+
 async function init() {
   loadLocal();
   buildMoneyRows("notesRows", noteValues);
   buildMoneyRows("coinsRows", coinValues);
   bindEvents();
 
-  if ($("operator")) {
-    $("operator").value = localStorage.getItem("brinka_operator") || "";
-    $("operator").addEventListener("input", e => localStorage.setItem("brinka_operator", e.target.value));
-  }
-
-  if ($("store")) $("store").value = state.settings.defaultStore;
-  if ($("expected")) $("expected").value = state.settings.defaultExpected;
   setNowDate();
   calculate();
-
   renderAll();
-  await initFirebase();
+
+  const ok = await initFirebaseCore();
+  if (!ok) {
+    showLogin(true);
+    return;
+  }
+
+  onAuthStateChanged(state.auth, async (user) => {
+    if (user) {
+      await afterLogin(user);
+    } else {
+      showLogin(true);
+      setStatus("local", "Sem login", "Entra para sincronizar por loja");
+    }
+  });
 }
 
 init();

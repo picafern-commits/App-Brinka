@@ -1,12 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /brinka_fechos/{doc} {
-      allow read, write: if true;
+
+    match /users/{userId} {
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin"
+      );
+
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
     }
 
-    match /brinka_backups_diarios/{doc} {
-      allow read, write: if true;
+    match /brinka_lojas/{lojaId}/fechos/{docId} {
+      allow read, write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.lojaId == lojaId
+      );
+    }
+
+    match /brinka_lojas/{lojaId}/backups_diarios/{docId} {
+      allow read, write: if request.auth != null && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin" ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.lojaId == lojaId
+      );
     }
   }
 }
