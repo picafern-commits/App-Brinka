@@ -3,16 +3,19 @@ console.log("[Brinka] app.js carregado - fix scroll/login");
 let brinkaLastTouchEnd = 0;
 
 document.addEventListener("touchend", function (event) {
+  if (!window.matchMedia("(max-width: 900px)").matches) return;
   const now = Date.now();
   if (now - brinkaLastTouchEnd <= 300) event.preventDefault();
   brinkaLastTouchEnd = now;
 }, { passive: false });
 
-document.addEventListener("gesturestart", event => event.preventDefault(), { passive: false });
-document.addEventListener("gesturechange", event => event.preventDefault(), { passive: false });
-document.addEventListener("gestureend", event => event.preventDefault(), { passive: false });
+document.addEventListener("gesturestart", event => { if (window.matchMedia("(max-width: 900px)").matches) event.preventDefault(); }, { passive: false });
+document.addEventListener("gesturechange", event => { if (window.matchMedia("(max-width: 900px)").matches) event.preventDefault(); }, { passive: false });
+document.addEventListener("gestureend", event => { if (window.matchMedia("(max-width: 900px)").matches) event.preventDefault(); }, { passive: false });
 document.addEventListener("touchmove", function (event) {
-  if (event.touches && event.touches.length > 1) event.preventDefault();
+  if (window.matchMedia("(max-width: 900px)").matches && event.touches && event.touches.length > 1) {
+    event.preventDefault();
+  }
 }, { passive: false });
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";

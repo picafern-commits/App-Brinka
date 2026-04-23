@@ -329,3 +329,58 @@ body {
     overflow-x: hidden !important;
   }
 }
+
+
+/* =========================================================
+   FIX DEFINITIVO SCROLL PC
+   PC: scroll normal
+   iPhone/mobile: sem zoom e só scroll vertical
+   ========================================================= */
+
+html,
+body {
+  height: auto !important;
+  min-height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  position: relative !important;
+}
+
+body {
+  touch-action: auto !important;
+  overscroll-behavior-y: auto !important;
+}
+
+.app-layout,
+.main-area,
+.content,
+.page,
+.panel,
+.panel-grid,
+.checkout-grid,
+.checkout-main {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+.sidebar {
+  overflow-y: auto !important;
+}
+
+/* Só no iPhone/mobile é que bloqueamos zoom/movimento lateral */
+@media (max-width: 900px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    touch-action: pan-y !important;
+    overscroll-behavior-x: none !important;
+  }
+
+  .main-area,
+  .content,
+  .page {
+    overflow-x: hidden !important;
+  }
+}
