@@ -1,15 +1,12 @@
 /*
-  BRINKA — FIREBASE MULTI-DISPOSITIVO
+  BRINKA — FIREBASE MULTI-DISPOSITIVO + BACKUPS DIÁRIOS
 
-  1) Vai ao Firebase
-  2) Cria projeto
-  3) Ativa Firestore Database
-  4) Project settings > Your apps > Web app
-  5) Copia a config para aqui
-  6) Muda BRINKA_FIREBASE_ENABLED para true
+  Firestore usado:
+  - brinka_fechos
+  - brinka_backups_diarios
 */
 
-window.BRINKA_FIREBASE_ENABLED = false;
+window.BRINKA_FIREBASE_ENABLED = true;
 
 window.BRINKA_FIREBASE_CONFIG = {
   apiKey: "AIzaSyCxdAnxDKikfKyzAvV9RHxOk-FyJbgCqa0",
@@ -19,4 +16,3 @@ window.BRINKA_FIREBASE_CONFIG = {
   messagingSenderId: "1030667180151",
   appId: "1:1030667180151:web:a97f74baa1471220be8e72"
 };
-

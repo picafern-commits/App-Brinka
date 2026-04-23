@@ -4,5 +4,9 @@ service cloud.firestore {
     match /brinka_fechos/{doc} {
       allow read, write: if true;
     }
+
+    match /brinka_backups_diarios/{doc} {
+      allow read, write: if true;
+    }
   }
 }
