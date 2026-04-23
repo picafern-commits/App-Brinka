@@ -1,0 +1,38 @@
+body {
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin: 20px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px;
+  background: #1e293b;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+input {
+  width: 60px;
+  text-align: center;
+}
+
+.total-box {
+  margin: 20px;
+  font-size: 24px;
+}
+
+button {
+  padding: 15px;
+  font-size: 18px;
+  border: none;
+  background: #22c55e;
+  color: white;
+  border-radius: 10px;
+}
