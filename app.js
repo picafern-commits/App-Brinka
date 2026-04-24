@@ -56,7 +56,8 @@ const state = {
   user: null,
   profile: null,
   appStarted: false,
-  presenceTimer: null
+  presenceTimer: null,
+  usersUnsubscribe: null
 };
 
 const $ = (id) => document.getElementById(id);
@@ -516,7 +517,7 @@ async function deleteClosure(id) {
 
 
 function onlineLimitMs() {
-  return 2 * 60 * 1000;
+  return 5 * 60 * 1000;
 }
 
 function readLastSeenMs(value) {
@@ -550,12 +551,14 @@ async function updateMyPresence(isOnline = true) {
 
 function startPresenceHeartbeat() {
   if (state.presenceTimer) clearInterval(state.presenceTimer);
+    if (state.usersUnsubscribe) state.usersUnsubscribe();
+    state.usersUnsubscribe = null;
 
   updateMyPresence(true);
   state.presenceTimer = setInterval(() => {
     updateMyPresence(true);
     if (isAdmin() && $("usersList")) loadUsers();
-  }, 30000);
+  }, 15000);
 
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") updateMyPresence(true);
@@ -595,8 +598,107 @@ function clearUserForm() {
   if ($("userStore")) $("userStore").value = "loja_1";
 }
 
+
+function startUsersOnlineListener() {
+  if (!isAdmin() || !state.db) return;
+
+  if (state.usersUnsubscribe) {
+    state.usersUnsubscribe();
+    state.usersUnsubscribe = null;
+  }
+
+  state.usersUnsubscribe = onSnapshot(usersCollection(), (snap) => {
+    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    renderUsersList(users);
+  }, (error) => {
+    console.error("Erro realtime users:", error);
+    if ($("usersList")) $("usersList").innerHTML = `<p class="muted">Erro ao carregar utilizadores. Verifica regras Firebase.</p>`;
+  });
+}
+
+function renderUsersList(users) {
+  const onlineCount = users.filter(isUserOnline).length;
+  if ($("onlineSummary")) $("onlineSummary").textContent = `Online: ${onlineCount}`;
+
+  if (!$("usersList")) return;
+
+  $("usersList").innerHTML = users.map(user => {
+    const lojaName = storeProfiles.find(s => s.id === user.lojaId)?.name || user.lojaId || "—";
+    const online = isUserOnline(user);
+    const lastSeenLabel = readLastSeenMs(user.lastSeen)
+      ? new Date(readLastSeenMs(user.lastSeen)).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
+      : "Nunca";
+
+    return `
+      <div class="user-card">
+        <div class="user-card-top">
+          <div>
+            <strong>${user.nome || "Sem nome"}</strong><br>
+            <small>${user.email || "Sem email"}</small><br>
+            <small>UID: ${user.uid}</small>
+          </div>
+          <span class="pill">${user.role || "user"}</span>
+        </div>
+
+        <div class="user-chip-row">
+          <span class="user-chip ${online ? "online" : "offline"}">${online ? "Online" : "Offline"}</span>
+          <span class="user-chip">Loja: ${lojaName}</span>
+          <span class="user-chip">${user.ativo === false ? "Bloqueado" : "Ativo"}</span>
+          <span class="user-chip">Visto: ${lastSeenLabel}</span>
+        </div>
+
+        <div class="user-actions">
+          <button class="mini-btn" data-edit-user="${user.uid}">Editar</button>
+          <button class="mini-btn" data-reset-user="${user.email || ""}">Reset password</button>
+          <button class="mini-btn danger" data-delete-user="${user.uid}">Apagar perfil</button>
+        </div>
+      </div>
+    `;
+  }).join("") || `<p class="muted">Ainda não existem perfis.</p>`;
+
+  document.querySelectorAll("[data-edit-user]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const user = users.find(u => u.uid === btn.dataset.editUser);
+      if (!user) return;
+      $("userUid").value = user.uid || "";
+      $("userName").value = user.nome || "";
+      $("userEmail").value = user.email || "";
+      $("userRole").value = user.role || "user";
+      $("userStore").value = user.lojaId || "loja_1";
+      toast("Perfil carregado para edição");
+    });
+  });
+
+  document.querySelectorAll("[data-reset-user]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const email = btn.dataset.resetUser;
+      if (!email) { toast("Este perfil não tem email"); return; }
+      try {
+        await sendPasswordResetEmail(state.auth, email);
+        toast("Email de reset enviado");
+      } catch (error) {
+        console.error(error);
+        toast("Erro ao enviar reset");
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-delete-user]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      if (!confirm("Apagar este perfil? O login no Authentication continua a existir.")) return;
+      try {
+        await deleteDoc(doc(state.db, "users", btn.dataset.deleteUser));
+        toast("Perfil apagado");
+      } catch (error) {
+        console.error(error);
+        toast("Erro ao apagar perfil");
+      }
+    });
+  });
+}
+
 async function loadUsers() {
-  if (!canManageUsers() || !state.db) {
+  if (!isAdmin() || !state.db) {
     if ($("usersList")) $("usersList").innerHTML = `<p class="muted">Só admin pode gerir utilizadores.</p>`;
     return;
   }
@@ -604,81 +706,7 @@ async function loadUsers() {
   try {
     const snap = await getDocs(usersCollection());
     const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-    const onlineCount = users.filter(isUserOnline).length;
-    if ($("onlineSummary")) $("onlineSummary").textContent = `Online: ${onlineCount}`;
-
-    if ($("usersList")) {
-      $("usersList").innerHTML = users.map(user => {
-        const lojaName = storeProfiles.find(s => s.id === user.lojaId)?.name || user.lojaId || "—";
-        const online = isUserOnline(user);
-        const lastSeenLabel = readLastSeenMs(user.lastSeen) ? new Date(readLastSeenMs(user.lastSeen)).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }) : "Nunca";
-        return `
-          <div class="user-card">
-            <div class="user-card-top">
-              <div>
-                <strong>${user.nome || "Sem nome"}</strong><br>
-                <small>${user.email || "Sem email"}</small><br>
-                <small>UID: ${user.uid}</small>
-              </div>
-              <span class="pill">${user.role || "user"}</span>
-            </div>
-            <div class="user-chip-row">
-              <span class="user-chip">Loja: ${lojaName}</span>
-              <span class="user-chip role-${user.role || "user"}">Role: ${user.role || "user"}</span>
-              <span class="user-chip ${online ? "online" : "offline"}">${online ? "Online" : "Offline"}</span>
-              <span class="user-chip">${user.ativo === false ? "Bloqueado" : "Ativo"}</span>
-              <span class="user-chip">Visto: ${lastSeenLabel}</span>
-            </div>
-            <div class="user-actions">
-              <button class="mini-btn" data-edit-user="${user.uid}">Editar</button>
-              <button class="mini-btn" data-reset-user="${user.email || ""}">Reset password</button>
-              <button class="mini-btn danger" data-delete-user="${user.uid}">Apagar perfil</button>
-            </div>
-          </div>
-        `;
-      }).join("") || `<p class="muted">Ainda não existem perfis.</p>`;
-
-      document.querySelectorAll("[data-edit-user]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const user = users.find(u => u.uid === btn.dataset.editUser);
-          if (!user) return;
-          $("userUid").value = user.uid || "";
-          $("userName").value = user.nome || "";
-          $("userEmail").value = user.email || "";
-          $("userRole").value = user.role || "user";
-          $("userStore").value = user.lojaId || "loja_1";
-          toast("Perfil carregado para edição");
-        });
-      });
-
-      document.querySelectorAll("[data-reset-user]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const email = btn.dataset.resetUser;
-          if (!email) { toast("Este perfil não tem email"); return; }
-          try {
-            await sendPasswordResetEmail(state.auth, email);
-            toast("Email de reset enviado");
-          } catch (error) {
-            console.error(error);
-            toast("Erro ao enviar reset");
-          }
-        });
-      });
-
-      document.querySelectorAll("[data-delete-user]").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          if (!confirm("Apagar este perfil? O login no Authentication continua a existir.")) return;
-          try {
-            await deleteDoc(doc(state.db, "users", btn.dataset.deleteUser));
-            toast("Perfil apagado");
-            await loadUsers();
-          } catch (error) {
-            console.error(error);
-            toast("Erro ao apagar perfil");
-          }
-        });
-      });
-    }
+    renderUsersList(users);
   } catch (error) {
     console.error(error);
     if ($("usersList")) $("usersList").innerHTML = `<p class="muted">Erro ao carregar utilizadores. Verifica regras Firebase.</p>`;
@@ -1030,6 +1058,7 @@ async function changeActiveStore(storeId) {
   renderAll();
   await startStoreListener();
     startPresenceHeartbeat();
+    if (isAdmin()) startUsersOnlineListener();
   toast(`Loja ativa: ${getActiveStoreName()}`);
 }
 
@@ -1080,6 +1109,8 @@ async function doLogout() {
   try {
     await updateMyPresence(false);
     if (state.presenceTimer) clearInterval(state.presenceTimer);
+    if (state.usersUnsubscribe) state.usersUnsubscribe();
+    state.usersUnsubscribe = null;
     state.presenceTimer = null;
     if (state.unsubscribe) state.unsubscribe();
     state.unsubscribe = null;
