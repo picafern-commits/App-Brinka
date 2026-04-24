@@ -103,7 +103,7 @@ function canManageUsers() {
 }
 
 function canDeleteFechos() {
-  return ["admin", "gerente"].includes(state.profile?.role) || isAdmin();
+  return ["admin", "gerente", "user"].includes(state.profile?.role) || isAdmin();
 }
 
 function canCreateFechos() {
@@ -502,7 +502,7 @@ function clearForm(show = true) {
 
 async function deleteClosure(id) {
   if (!state.user) return;
-  if (!canDeleteFechos()) { toast("Sem permissão para apagar fechos"); return; }
+  if (!canDeleteFechos()) { toast("Sem permissão"); return; }
 
   try {
     await deleteDoc(doc(state.db, "brinka_lojas", getActiveStoreId(), "fechos", id));
