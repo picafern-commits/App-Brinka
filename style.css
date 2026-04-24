@@ -917,3 +917,192 @@ body {
     max-width: 100% !important;
   }
 }
+
+
+/* Auto-ajuste ao tamanho do ecrã - Web/Desktop/iPhone */
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+* {
+  min-width: 0;
+}
+
+.main-area,
+.content,
+.page {
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.checkout-grid {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.checkout-main {
+  min-width: 0 !important;
+}
+
+.money-grid {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.money-card,
+.panel,
+.total-panel,
+.total-card {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.money-row {
+  display: grid !important;
+  grid-template-columns: minmax(58px, 90px) minmax(86px, 1fr) minmax(70px, 96px) !important;
+  gap: 10px !important;
+  align-items: center !important;
+}
+
+.money-row input {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.money-sub {
+  white-space: nowrap !important;
+  text-align: right !important;
+}
+
+@media (max-width: 1250px) and (min-width: 851px) {
+  .main-area {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .checkout-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 300px !important;
+    gap: 14px !important;
+  }
+
+  .money-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  .money-row {
+    grid-template-columns: 70px minmax(72px, 1fr) 78px !important;
+    gap: 8px !important;
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .money-value {
+    font-size: 15px !important;
+  }
+
+  .money-sub {
+    font-size: 13px !important;
+  }
+
+  .total-panel,
+  .total-card {
+    width: 300px !important;
+  }
+}
+
+@media (max-width: 1050px) and (min-width: 851px) {
+  .checkout-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .total-panel,
+  .total-card {
+    width: 100% !important;
+    position: static !important;
+  }
+
+  .money-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 850px) {
+  .main-area {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .content {
+    width: 100% !important;
+  }
+
+  .checkout-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .checkout-main {
+    display: grid !important;
+    gap: 14px !important;
+  }
+
+  .money-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .money-row {
+    grid-template-columns: 74px minmax(92px, 1fr) 82px !important;
+    gap: 8px !important;
+  }
+
+  .total-panel,
+  .total-card {
+    width: 100% !important;
+    position: static !important;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .main-area {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+
+  .money-row {
+    grid-template-columns: 58px minmax(80px, 1fr) 74px !important;
+    gap: 6px !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .money-value {
+    font-size: 14px !important;
+  }
+
+  .money-sub {
+    font-size: 12px !important;
+  }
+
+  .panel,
+  .money-card,
+  .total-card {
+    border-radius: 22px !important;
+  }
+}
