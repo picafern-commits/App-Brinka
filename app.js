@@ -6,6 +6,7 @@ function loadRememberedEmail() {
 }
 
 
+
 // ===== ONLINE NÍVEL EMPRESA =====
 function getPresenceState(user) {
   if (!user.lastSeenMs) return "offline";
@@ -1286,7 +1287,7 @@ async function doLogin() {
   } catch (error) {
     console.error("[Brinka] Erro login:", error);
     if ($("loginError")) {
-      if (error.code === "auth/invalid-credential" || error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
+      if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"].includes(error.code)) {
         $("loginError").textContent = "Email ou password inválidos.";
       } else if (error.code === "auth/too-many-requests") {
         $("loginError").textContent = "Demasiadas tentativas. Tenta mais tarde.";
