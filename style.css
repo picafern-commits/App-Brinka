@@ -579,3 +579,24 @@ body {
     order: 1 !important;
   }
 }
+
+/* Dashboard Inteligente */
+.dashboard-intel { margin-top: 16px; }
+.intel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:16px; }
+.intel-card { padding:16px; border-radius:18px; border:1px solid var(--line); background:rgba(255,255,255,.06); }
+.intel-card span { display:block; color:var(--muted); font-size:13px; font-weight:900; margin-bottom:10px; }
+.intel-card strong { font-size:24px; letter-spacing:-.04em; }
+.chart-wrap { padding:16px; border-radius:22px; border:1px solid var(--line); background:rgba(255,255,255,.045); margin-bottom:14px; }
+.chart-title { display:flex; justify-content:space-between; gap:12px; color:var(--muted); font-weight:900; margin-bottom:14px; }
+.chart-title b { color:var(--text); }
+.bar-chart { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; align-items:end; height:170px; }
+.bar-day { height:100%; display:grid; grid-template-rows:1fr auto; gap:8px; min-width:0; }
+.bar-track { display:flex; align-items:end; justify-content:center; border-radius:16px; background:rgba(255,255,255,.055); overflow:hidden; border:1px solid rgba(255,255,255,.06); }
+.bar-fill { width:100%; min-height:6px; border-radius:14px 14px 0 0; background:linear-gradient(180deg,var(--orange2),var(--orange)); box-shadow:0 -8px 22px rgba(255,149,0,.18); transition:height .25s ease; }
+.bar-label { text-align:center; color:var(--muted); font-size:11px; font-weight:900; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.insights-list { display:grid; gap:10px; }
+.insight-item { display:flex; align-items:flex-start; gap:10px; padding:12px; border-radius:16px; border:1px solid var(--line); background:rgba(255,255,255,.055); color:var(--text); }
+.insight-item .emoji { width:30px; height:30px; display:grid; place-items:center; border-radius:12px; background:rgba(255,255,255,.08); flex:0 0 auto; }
+.insight-item p { margin:0; color:var(--muted); line-height:1.35; }
+@media (max-width:1180px){ .intel-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:850px){ .intel-grid{grid-template-columns:1fr;} .bar-chart{gap:6px;} .bar-label{font-size:10px;} }

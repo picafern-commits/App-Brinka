@@ -716,6 +716,100 @@ async function saveUserProfile() {
   }
 }
 
+
+function dateKeyFromDate(date) {
+  const d = new Date(date);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function shortDayLabel(date) {
+  return new Date(date).toLocaleDateString("pt-PT", { weekday: "short" }).replace(".", "");
+}
+
+function renderSmartDashboard() {
+  if (!$("dashboardInteligente")) return;
+
+  const items = state.closures || [];
+  const total = items.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const avg = items.length ? total / items.length : 0;
+  const okCount = items.filter(item => Math.abs(Number(item.diff || 0)) < 0.005 && Number(item.expected || 0) > 0).length;
+  const okRate = items.length ? Math.round((okCount / items.length) * 100) : 0;
+  const worstDiff = items.reduce((max, item) => Math.max(max, Math.abs(Number(item.diff || 0))), 0);
+
+  const today = new Date().toLocaleDateString("pt-PT");
+  const todayItems = items.filter(item => item.dateIso && new Date(item.dateIso).toLocaleDateString("pt-PT") === today);
+  const todayTotal = todayItems.reduce((sum, item) => sum + Number(item.total || 0), 0);
+  const todayVsAvg = avg > 0 ? Math.round(((todayTotal - avg) / avg) * 100) : 0;
+
+  $("smartAvg").textContent = eur(avg);
+  $("smartWorstDiff").textContent = eur(worstDiff);
+  $("smartOkRate").textContent = `${okRate}%`;
+  $("smartTodayVsAvg").textContent = `${todayVsAvg > 0 ? "+" : ""}${todayVsAvg}%`;
+
+  const health = $("dashHealth");
+  if (health) {
+    if (!items.length) {
+      health.textContent = "Sem dados";
+      health.style.background = "rgba(255,149,0,.15)";
+      health.style.color = "#ffd7a0";
+    } else if (okRate >= 85 && worstDiff <= 5) {
+      health.textContent = "Saudável";
+      health.style.background = "rgba(49,210,124,.16)";
+      health.style.color = "#9ff2c5";
+    } else if (worstDiff > 20) {
+      health.textContent = "Atenção";
+      health.style.background = "rgba(255,92,114,.16)";
+      health.style.color = "#ffd0d7";
+    } else {
+      health.textContent = "Normal";
+      health.style.background = "rgba(255,149,0,.15)";
+      health.style.color = "#ffd7a0";
+    }
+  }
+
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = dateKeyFromDate(d);
+    const dayItems = items.filter(item => item.dateIso && dateKeyFromDate(item.dateIso) === key);
+    const dayTotal = dayItems.reduce((sum, item) => sum + Number(item.total || 0), 0);
+    days.push({ label: shortDayLabel(d), total: dayTotal });
+  }
+
+  const maxDay = Math.max(1, ...days.map(d => d.total));
+  const total7 = days.reduce((sum, d) => sum + d.total, 0);
+  if ($("chartTotal7")) $("chartTotal7").textContent = eur(total7);
+
+  if ($("weekChart")) {
+    $("weekChart").innerHTML = days.map(day => {
+      const pct = Math.max(4, Math.round((day.total / maxDay) * 100));
+      return `<div class="bar-day" title="${day.label}: ${eur(day.total)}"><div class="bar-track"><div class="bar-fill" style="height:${pct}%"></div></div><div class="bar-label">${day.label}</div></div>`;
+    }).join("");
+  }
+
+  const insights = [];
+  if (!items.length) {
+    insights.push({ emoji: "ℹ️", text: "Ainda não existem dados suficientes para gerar análise inteligente." });
+  } else {
+    const diffItems = items.filter(item => Math.abs(Number(item.diff || 0)) >= 0.005);
+    insights.push(diffItems.length
+      ? { emoji: "⚠️", text: `${diffItems.length} fecho(s) tiveram diferença de caixa. Vale a pena rever o histórico.` }
+      : { emoji: "✅", text: "Todos os fechos registados estão certos ou sem diferença relevante." }
+    );
+    insights.push(todayItems.length
+      ? { emoji: "📌", text: `Hoje tens ${todayItems.length} fecho(s), com total de ${eur(todayTotal)}.` }
+      : { emoji: "📌", text: "Ainda não existe fecho registado hoje nesta loja." }
+    );
+    if (worstDiff > 0) insights.push({ emoji: "🔎", text: `A maior diferença encontrada foi ${eur(worstDiff)}.` });
+    if (total7 > 0) insights.push({ emoji: "📈", text: `Nos últimos 7 dias foram registados ${eur(total7)} nesta loja.` });
+  }
+
+  if ($("smartInsights")) {
+    $("smartInsights").innerHTML = insights.slice(0, 4).map(item => `<div class="insight-item"><div class="emoji">${item.emoji}</div><p>${item.text}</p></div>`).join("");
+  }
+}
+
 function renderDashboard() {
   const today = new Date().toLocaleDateString("pt-PT");
   const todayItems = state.closures.filter(item => item.dateIso && new Date(item.dateIso).toLocaleDateString("pt-PT") === today);
@@ -824,6 +918,7 @@ function renderSettings() {
 
 function renderAll() {
   renderDashboard();
+  renderSmartDashboard();
   renderHistory();
   renderReports();
   renderSettings();
