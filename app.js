@@ -1,29 +1,3 @@
-console.log("[Brinka] login fix loaded");
-
-
-
-// ===== ONLINE NÍVEL EMPRESA =====
-function getPresenceState(user) {
-  if (!user.lastSeenMs) return "offline";
-  const diff = Date.now() - user.lastSeenMs;
-
-  if (diff < 15000) return "online";       // ativo agora
-  if (diff < 2 * 60 * 1000) return "active"; // ativo recente
-  if (diff < 10 * 60 * 1000) return "away";  // ausente
-  return "offline";
-}
-
-
-async 
-
-
-
-// ===== ONLINE DEFINITIVO =====
-
-
-async 
-
-
 console.log("[Brinka] app.js carregado - fix scroll/login");
 /* iPhone app total: bloquear zoom/double tap e manter só scroll vertical */
 let brinkaLastTouchEnd = 0;
@@ -45,95 +19,9 @@ document.addEventListener("touchmove", function (event) {
 }, { passive: false });
 
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-
-
-function loadRememberedEmail() {
-  const saved = localStorage.getItem("brinka_remember_email") || "";
-  if ($("loginEmail") && saved) $("loginEmail").value = saved;
-  if ($("rememberEmail")) $("rememberEmail").checked = Boolean(saved);
-}
-
-async function doLogin() {
-  const emailInput = $("loginEmail");
-  const passInput = $("loginPassword");
-  const err = $("loginError");
-
-  const email = emailInput ? emailInput.value.trim() : "";
-  const password = passInput ? passInput.value : "";
-
-  if (!email || !password) {
-    if (err) err.textContent = "Mete email e password.";
-    return;
-  }
-
-  if ($("rememberEmail")) {
-    if ($("rememberEmail").checked) localStorage.setItem("brinka_remember_email", email);
-    else localStorage.removeItem("brinka_remember_email");
-  }
-
-  if (err) err.textContent = "A entrar...";
-
-  try {
-    if (!state.auth) {
-      if (err) err.textContent = "Firebase Auth ainda não carregou. Recarrega a página.";
-      return;
-    }
-
-    await signInWithEmailAndPassword(state.auth, email, password);
-  } catch (error) {
-    console.error("[Brinka] Erro login:", error);
-    if (!err) return;
-
-    if (["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"].includes(error.code)) {
-      err.textContent = "Email ou password inválidos.";
-    } else if (error.code === "auth/too-many-requests") {
-      err.textContent = "Demasiadas tentativas. Tenta mais tarde.";
-    } else {
-      err.textContent = "Erro no login: " + (error.code || "Firebase");
-    }
-  }
-}
-
-function isUserOnline(user) {
-  if (!user || !user.lastSeenMs) return false;
-  return (Date.now() - Number(user.lastSeenMs)) < (5 * 60 * 1000);
-}
-
-function lastSeenText(user) {
-  if (!user || !user.lastSeenMs) return "Nunca online";
-  const diff = Date.now() - Number(user.lastSeenMs);
-  const min = Math.floor(diff / 60000);
-  if (diff < 10000) return "Online agora";
-  if (min < 1) return "Online há segundos";
-  if (min < 60) return `Visto há ${min} min`;
-  return `Visto há ${Math.floor(min / 60)}h`;
-}
-
-async function updateMyPresence(isOnline = true) {
-  if (!state.db || !state.user) return;
-  try {
-    await setDoc(doc(state.db, "users", state.user.uid), {
-      online: isOnline,
-      lastSeenMs: Date.now(),
-      updatedAt: Date.now()
-    }, { merge: true });
-  } catch (error) {
-    console.warn("[Brinka] Presence erro:", error);
-  }
-}
-
-function startPresenceSystem() {
-  updateMyPresence(true);
-  if (state.presenceTimer) clearInterval(state.presenceTimer);
-  state.presenceTimer = setInterval(() => updateMyPresence(true), 5000);
-  window.addEventListener("beforeunload", () => updateMyPresence(false));
-}
-
-
-
-
 import {
-  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, getDoc, getDocs, serverTimestamp, query, orderBy, onSnapshot, enableIndexedDbPersistence
+  getFirestore, collection, addDoc, deleteDoc, doc, setDoc, getDoc, getDocs,
+  serverTimestamp, query, orderBy, onSnapshot, enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword, sendPasswordResetEmail
@@ -563,8 +451,6 @@ async function saveClosure() {
 
   const calc = calculate();
 
-  if (!validateDiffBeforeSave(calc)) return;
-
   if (calc.total <= 0) {
     toast("Mete valores antes de guardar");
     return;
@@ -585,8 +471,6 @@ async function saveClosure() {
     role: state.profile?.role || "user",
     expected: calc.expected,
     diff: calc.diff,
-    diffLevel: getDiffLevel(calc.diff),
-    diffLabel: getDiffLabel(calc.diff),
     total: calc.total,
     notesTotal: calc.notesTotal,
     coinsTotal: calc.coinsTotal,
@@ -644,8 +528,26 @@ function readLastSeenMs(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function isUserOnline(user) {
+  return Boolean(user.online) && (Date.now() - readLastSeenMs(user.lastSeen)) < onlineLimitMs();
+}
 
-async }
+async function updateMyPresence(isOnline = true) {
+  if (!state.db || !state.user) return;
+
+  try {
+    await setDoc(doc(state.db, "users", state.user.uid), {
+      online: isOnline,
+      lastSeen: serverTimestamp(),
+      currentLojaId: getActiveStoreId(),
+      currentLojaName: getActiveStoreName(),
+      userAgent: navigator.userAgent,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  } catch (error) {
+    console.warn("Presença não atualizada:", error);
+  }
+}
 
 function startPresenceHeartbeat() {
   if (state.presenceTimer) clearInterval(state.presenceTimer);
@@ -722,7 +624,7 @@ function renderUsersList(users) {
 
   $("usersList").innerHTML = users.map(user => {
     const lojaName = storeProfiles.find(s => s.id === user.lojaId)?.name || user.lojaId || "—";
-    const statePresence = getPresenceState(user);
+    const online = isUserOnline(user);
     const lastSeenLabel = readLastSeenMs(user.lastSeen)
       ? new Date(readLastSeenMs(user.lastSeen)).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" })
       : "Nunca";
@@ -739,7 +641,7 @@ function renderUsersList(users) {
         </div>
 
         <div class="user-chip-row">
-          <span class="user-chip ${online ? "online" : "offline"}">${lastSeenText(user)}</span>
+          <span class="user-chip ${online ? "online" : "offline"}">${online ? "Online" : "Offline"}</span>
           <span class="user-chip">Loja: ${lojaName}</span>
           <span class="user-chip">${user.ativo === false ? "Bloqueado" : "Ativo"}</span>
           <span class="user-chip">Visto: ${lastSeenLabel}</span>
@@ -996,82 +898,6 @@ function renderSmartDashboard() {
   }
 }
 
-
-function getDiffLevel(diff) {
-  const value = Math.abs(Number(diff || 0));
-  if (value < 0.005) return "ok";
-  if (value <= 5) return "warning";
-  return "danger";
-}
-
-function getDiffLabel(diff) {
-  const level = getDiffLevel(diff);
-  if (level === "ok") return "Certo";
-  if (level === "warning") return "Diferença pequena";
-  return "Diferença grave";
-}
-
-function validateDiffBeforeSave(calc) {
-  const diffAbs = Math.abs(Number(calc.diff || 0));
-  const obs = $("obs")?.value.trim() || "";
-
-  if (diffAbs >= 0.005 && obs.length < 3) {
-    toast("Tens diferença de caixa. Mete uma observação antes de guardar.");
-    if ($("obs")) {
-      $("obs").focus();
-      $("obs").style.borderColor = "rgba(255,92,114,.75)";
-      $("obs").style.boxShadow = "0 0 0 4px rgba(255,92,114,.12)";
-    }
-    return false;
-  }
-
-  if ($("obs")) {
-    $("obs").style.borderColor = "";
-    $("obs").style.boxShadow = "";
-  }
-
-  if (diffAbs > 20 && !confirm(`Diferença grave de ${eur(diffAbs)}. Queres mesmo guardar este fecho?`)) {
-    return false;
-  }
-
-  return true;
-}
-
-async function renderMultiLojaResumo() {
-  if (!$("multiStoreGrid") || !isAdmin() || !state.db) return;
-
-  try {
-    const cards = [];
-
-    for (const store of storeProfiles) {
-      const snap = await getDocs(collection(state.db, "brinka_lojas", store.id, "fechos"));
-      const items = snap.docs.map(d => d.data());
-
-      const today = new Date().toLocaleDateString("pt-PT");
-      const todayItems = items.filter(item => item.dateIso && new Date(item.dateIso).toLocaleDateString("pt-PT") === today);
-
-      const totalHoje = todayItems.reduce((sum, item) => sum + Number(item.total || 0), 0);
-      const diffHoje = todayItems.reduce((sum, item) => sum + Number(item.diff || 0), 0);
-      const erros = items.filter(item => Math.abs(Number(item.diff || 0)) >= 0.005).length;
-
-      cards.push(`
-        <div class="store-summary-card">
-          <h4>${store.name}</h4>
-          <strong>${eur(totalHoje)}</strong>
-          <div class="store-summary-line"><span>Fechos hoje</span><b>${todayItems.length}</b></div>
-          <div class="store-summary-line"><span>Diferença hoje</span><b class="${getDiffLevel(diffHoje) === "danger" ? "diff-danger" : getDiffLevel(diffHoje) === "warning" ? "diff-warning" : "diff-ok"}">${eur(diffHoje)}</b></div>
-          <div class="store-summary-line"><span>Fechos com diferença</span><b>${erros}</b></div>
-        </div>
-      `);
-    }
-
-    $("multiStoreGrid").innerHTML = cards.join("");
-  } catch (error) {
-    console.error(error);
-    $("multiStoreGrid").innerHTML = `<p class="muted">Não foi possível carregar o resumo multi-loja. Verifica permissões Firebase.</p>`;
-  }
-}
-
 function renderDashboard() {
   const today = new Date().toLocaleDateString("pt-PT");
   const todayItems = state.closures.filter(item => item.dateIso && new Date(item.dateIso).toLocaleDateString("pt-PT") === today);
@@ -1094,7 +920,7 @@ function renderDashboard() {
     $("recentClosures").innerHTML = state.closures.slice(0, 6).map(item => `
       <div class="list-item">
         <div><strong>${eur(item.total)}</strong><br><span class="muted">${item.dateLabel} · ${item.operator || "Sem utilizador"}</span></div>
-        <div style="text-align:right"><b>${getDiffLabel(item.diff)}</b><br><span class="muted">${eur(item.diff)}</span></div>
+        <div style="text-align:right"><b>${getStatus(item.diff)}</b><br><span class="muted">${eur(item.diff)}</span></div>
       </div>
     `).join("") || `<p class="muted">Ainda não existem fechos guardados nesta loja.</p>`;
   }
@@ -1120,7 +946,7 @@ function renderHistory() {
         <td>${item.operator || "—"}</td>
         <td><b>${eur(item.total)}</b></td>
         <td>${eur(item.expected)}</td>
-        <td><span class="diff-badge ${getDiffLevel(item.diff)}">${eur(item.diff)} · ${getDiffLabel(item.diff)}</span></td>
+        <td>${eur(item.diff)}</td>
         <td><button class="delete-row" data-delete="${id}">Apagar</button></td>
       </tr>
     `;
@@ -1180,7 +1006,6 @@ function renderSettings() {
 
 function renderAll() {
   renderDashboard();
-  renderMultiLojaResumo();
   renderSmartDashboard();
   renderHistory();
   renderReports();
@@ -1232,7 +1057,7 @@ async function changeActiveStore(storeId) {
   state.closures = JSON.parse(localStorage.getItem(`brinka_roles_closures_${getActiveStoreId()}`) || "[]");
   renderAll();
   await startStoreListener();
-    startPresenceSystem();
+    startPresenceHeartbeat();
     if (isAdmin()) startUsersOnlineListener();
   toast(`Loja ativa: ${getActiveStoreName()}`);
 }
@@ -1261,7 +1086,24 @@ function exportCsv() {
   URL.revokeObjectURL(link.href);
 }
 
-async 
+async function doLogin() {
+  const email = $("loginEmail")?.value.trim();
+  const password = $("loginPassword")?.value;
+
+  if (!email || !password) {
+    $("loginError").textContent = "Mete email e password.";
+    return;
+  }
+
+  $("loginError").textContent = "A entrar...";
+
+  try {
+    await signInWithEmailAndPassword(state.auth, email, password);
+  } catch (error) {
+    console.error(error);
+    $("loginError").textContent = "Login inválido ou sem permissão.";
+  }
+}
 
 async function doLogout() {
   try {
@@ -1373,7 +1215,6 @@ async function init() {
   buildMoneyRows("notesRows", noteValues);
   buildMoneyRows("coinsRows", coinValues);
   bindEvents();
-  loadRememberedEmail();
 
   setNowDate();
   calculate();
@@ -1406,20 +1247,3 @@ document.addEventListener("click", (event) => {
   }
 });
 
-
-
-// BRINKA_LOGIN_FALLBACK_FINAL
-document.addEventListener("click", (event) => {
-  const btn = event.target.closest?.("#loginBtn");
-  if (btn) {
-    event.preventDefault();
-    doLogin();
-  }
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && (event.target?.id === "loginEmail" || event.target?.id === "loginPassword")) {
-    event.preventDefault();
-    doLogin();
-  }
-});
