@@ -697,21 +697,3 @@ body {
 .active-dot { background:#4de3ff; }
 .away-dot { background:#ffb020; }
 .offline-dot { background:#555; }
-
-/* Memorizar email login */
-.remember-row {
-  display: flex !important;
-  align-items: center;
-  gap: 10px;
-  margin: 12px 0 4px;
-  color: #d9b6df;
-  font-weight: 800;
-  user-select: none;
-}
-
-.remember-row input {
-  width: 18px !important;
-  height: 18px !important;
-  accent-color: #ff9500;
-  flex: 0 0 auto;
-}
