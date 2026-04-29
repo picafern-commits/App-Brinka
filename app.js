@@ -3,6 +3,7 @@ import {
   getFirestore,
   collection,
   addDoc,
+  updateDoc,
   deleteDoc,
   doc,
   setDoc,
@@ -451,6 +452,8 @@ async function startStoreListener() {
   state.unsubscribe = onSnapshot(q, (snap) => {
     state.closures = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     renderAll();
+    setExpectedFromPrevious();
+    calculate();
     setStatus("online", "Firebase ativo", `Dados sincronizados · ${getActiveStoreName()}`);
     createDailyBackup("auto").catch(console.warn);
   }, (error) => {
@@ -491,32 +494,59 @@ function collectRows(selector) {
   });
 }
 
+
+function getPreviousClosureValue(currentId = null, dateIso = null) {
+  const sorted = [...state.closures]
+    .filter(i => !currentId || (i.id || i.localId) !== currentId)
+    .sort((a, b) => new Date(b.dateIso || 0) - new Date(a.dateIso || 0));
+
+  if (!sorted.length) return 0;
+
+  if (dateIso) {
+    const before = sorted.find(i => new Date(i.dateIso || 0) < new Date(dateIso));
+    if (before) return Number(before.total || 0);
+  }
+
+  return Number(sorted[0].total || 0);
+}
+
+function setExpectedFromPrevious() {
+  const previous = getPreviousClosureValue();
+  if ($("expected")) $("expected").value = previous ? String(previous.toFixed(2)) : "0";
+  return previous;
+}
+
 function calculate() {
   const notes = collectRows("#notesRows .money-row");
   const coins = collectRows("#coinsRows .money-row");
   const notesTotal = notes.reduce((sum, r) => sum + r.subtotal, 0);
   const coinsTotal = coins.reduce((sum, r) => sum + r.subtotal, 0);
   const total = notesTotal + coinsTotal;
-  const expected = Number($("expected")?.value || 0);
+  const expected = getPreviousClosureValue();
+  if ($("expected")) $("expected").value = expected ? String(expected.toFixed(2)) : "0";
   const diff = total - expected;
+  const initialValue = Number($("initialValue")?.value || 0);
+  const profit = total - initialValue;
 
   if ($("notesTotal")) $("notesTotal").textContent = eur(notesTotal);
   if ($("coinsTotal")) $("coinsTotal").textContent = eur(coinsTotal);
   if ($("sumNotes")) $("sumNotes").textContent = eur(notesTotal);
   if ($("sumCoins")) $("sumCoins").textContent = eur(coinsTotal);
   if ($("sumExpected")) $("sumExpected").textContent = eur(expected);
+  if ($("sumInitial")) $("sumInitial").textContent = eur(initialValue);
+  if ($("sumProfit")) $("sumProfit").textContent = eur(profit);
   if ($("sumDiff")) $("sumDiff").textContent = eur(diff);
   if ($("grandTotal")) $("grandTotal").textContent = eur(total);
 
   const badge = $("diffBadge");
   if (badge) {
     const level = getDiffLevel(diff);
-    badge.textContent = expected ? getDiffLabel(diff) : "Sem esperado";
+    badge.textContent = expected ? getDiffLabel(diff) : "Sem fecho anterior";
     badge.style.background = level === "danger" ? "rgba(255,92,114,.16)" : level === "warning" ? "rgba(255,149,0,.15)" : "rgba(49,210,124,.16)";
     badge.style.color = level === "danger" ? "#ffd0d7" : level === "warning" ? "#ffd7a0" : "#9ff2c5";
   }
 
-  return { notes, coins, notesTotal, coinsTotal, total, expected, diff };
+  return { notes, coins, notesTotal, coinsTotal, total, expected, diff, initialValue, profit };
 }
 
 function getDiffLevel(diff) {
@@ -537,7 +567,7 @@ function validateDiffBeforeSave(calc) {
   const diffAbs = Math.abs(Number(calc.diff || 0));
   const obs = $("obs")?.value.trim() || "";
 
-  if (diffAbs >= 0.005 && obs.length < 3) {
+  if (Number(calc.expected || 0) > 0 && diffAbs >= 0.005 && obs.length < 3) {
     toast("Tens diferença de caixa. Mete uma observação.");
     $("obs")?.focus();
     return false;
@@ -568,6 +598,9 @@ async function saveClosure() {
     operatorEmail: state.user.email,
     role: state.profile?.role || "user",
     expected: calc.expected,
+    previousTotal: calc.expected,
+    initialValue: calc.initialValue,
+    profit: calc.profit,
     diff: calc.diff,
     diffLevel: getDiffLevel(calc.diff),
     diffLabel: getDiffLabel(calc.diff),
@@ -577,7 +610,8 @@ async function saveClosure() {
     notes: calc.notes,
     coins: calc.coins,
     observation: $("obs")?.value.trim() || "",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
   };
 
   try {
@@ -593,11 +627,94 @@ async function saveClosure() {
 function clearForm(show = true) {
   document.querySelectorAll(".money-row input").forEach(i => i.value = "");
   if ($("store")) $("store").value = getActiveStoreId();
-  if ($("expected")) $("expected").value = state.settings.defaultExpected || "";
+  setExpectedFromPrevious();
+  if ($("initialValue")) $("initialValue").value = "";
   if ($("obs")) $("obs").value = "";
   setNowDate();
   calculate();
   if (show) toast("Formulário limpo");
+}
+
+
+function toDateTimeLocalValue(dateIso) {
+  if (!dateIso) return "";
+  const d = new Date(dateIso);
+  if (Number.isNaN(d.getTime())) return "";
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
+function openEditClosure(id) {
+  const item = state.closures.find(i => (i.id || i.localId) === id);
+  if (!item) return toast("Fecho não encontrado");
+
+  const previous = getPreviousClosureValue(id, item.dateIso);
+
+  if ($("editClosureId")) $("editClosureId").value = id;
+  if ($("editOperator")) $("editOperator").value = item.operator || "";
+  if ($("editDate")) $("editDate").value = toDateTimeLocalValue(item.dateIso);
+  if ($("editTotal")) $("editTotal").value = Number(item.total || 0).toFixed(2);
+  if ($("editInitialValue")) $("editInitialValue").value = Number(item.initialValue || 0).toFixed(2);
+  if ($("editPrevious")) $("editPrevious").value = previous ? previous.toFixed(2) : "0.00";
+  if ($("editObs")) $("editObs").value = item.observation || "";
+
+  $("editClosureModal")?.classList.remove("hidden");
+  $("editClosureModal")?.setAttribute("aria-hidden", "false");
+}
+
+function closeEditClosure() {
+  $("editClosureModal")?.classList.add("hidden");
+  $("editClosureModal")?.setAttribute("aria-hidden", "true");
+}
+
+async function saveEditedClosure() {
+  const id = $("editClosureId")?.value;
+  if (!id) return toast("Fecho inválido");
+
+  const item = state.closures.find(i => (i.id || i.localId) === id);
+  if (!item) return toast("Fecho não encontrado");
+
+  const dateIso = $("editDate")?.value ? new Date($("editDate").value).toISOString() : item.dateIso;
+  const total = Number($("editTotal")?.value || 0);
+  const previous = getPreviousClosureValue(id, dateIso);
+  const initialValue = Number($("editInitialValue")?.value || 0);
+  const profit = total - initialValue;
+  const diff = total - previous;
+
+  if (total <= 0) return toast("Total inválido");
+
+  const obs = $("editObs")?.value.trim() || "";
+  if (Math.abs(diff) >= 0.005 && previous > 0 && obs.length < 3) {
+    toast("Mete uma observação para justificar a diferença");
+    $("editObs")?.focus();
+    return;
+  }
+
+  try {
+    await updateDoc(doc(state.db, "brinka_lojas", getActiveStoreId(), "fechos", id), {
+      operator: $("editOperator")?.value.trim() || item.operator || "",
+      dateIso,
+      dateLabel: new Date(dateIso).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }),
+      total,
+      initialValue,
+      profit,
+      expected: previous,
+      previousTotal: previous,
+      diff,
+      diffLevel: getDiffLevel(diff),
+      diffLabel: getDiffLabel(diff),
+      observation: obs,
+      edited: true,
+      editedAt: serverTimestamp(),
+      editedBy: state.user?.email || ""
+    });
+
+    closeEditClosure();
+    toast("Fecho atualizado");
+  } catch (error) {
+    console.error(error);
+    toast("Erro ao editar fecho");
+  }
 }
 
 async function deleteClosure(id) {
@@ -608,6 +725,76 @@ async function deleteClosure(id) {
   } catch (error) {
     console.error(error);
     toast("Erro ao apagar");
+  }
+}
+
+
+function getDayKeyFromIso(dateIso) {
+  const d = dateIso ? new Date(dateIso) : new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+}
+
+function getDailyTotals() {
+  const map = {};
+
+  (state.closures || []).forEach(item => {
+    if (!item.dateIso) return;
+    const key = getDayKeyFromIso(item.dateIso);
+    if (!map[key]) map[key] = { total: 0, count: 0, date: new Date(item.dateIso) };
+    map[key].total += Number(item.total || 0);
+    map[key].count += 1;
+  });
+
+  return Object.entries(map)
+    .map(([key, value]) => ({ key, ...value }))
+    .sort((a, b) => new Date(b.key) - new Date(a.key));
+}
+
+function renderProfitDashboard() {
+  if (!$("profitPanel")) return;
+
+  const days = getDailyTotals();
+  const todayKey = getDayKeyFromIso(new Date().toISOString());
+  const today = days.find(day => day.key === todayKey) || { total: 0, count: 0, key: todayKey };
+  const previous = days.find(day => day.key !== todayKey) || { total: 0, count: 0, key: "" };
+
+  const diff = Number(today.total || 0) - Number(previous.total || 0);
+  const hasPrevious = Boolean(previous.key);
+
+  if ($("profitToday")) $("profitToday").textContent = eur(today.total);
+  if ($("profitYesterday")) $("profitYesterday").textContent = hasPrevious ? eur(previous.total) : "—";
+  if ($("profitDiff")) $("profitDiff").textContent = hasPrevious ? eur(diff) : "—";
+
+  const status = $("profitStatus");
+  if (status) {
+    if (!hasPrevious) {
+      status.textContent = "Sem comparação";
+      status.className = "pill";
+    } else if (diff > 0) {
+      status.textContent = "Subiu";
+      status.className = "pill profit-good";
+    } else if (diff < 0) {
+      status.textContent = "Desceu";
+      status.className = "pill profit-bad";
+    } else {
+      status.textContent = "Igual";
+      status.className = "pill profit-neutral";
+    }
+  }
+
+  if ($("profitNote")) {
+    if (!hasPrevious) {
+      $("profitNote").textContent = "Ainda não existe fecho de um dia anterior para comparar.";
+    } else {
+      const percent = previous.total > 0 ? ((diff / previous.total) * 100) : 0;
+      $("profitNote").textContent = `${today.count} fecho(s) hoje comparado com ${previous.count} fecho(s) do dia anterior registado. Variação: ${percent > 0 ? "+" : ""}${percent.toFixed(1)}%.`;
+    }
+  }
+
+  const panel = $("profitPanel");
+  if (panel) {
+    panel.classList.remove("profit-up", "profit-down", "profit-flat");
+    panel.classList.add(!hasPrevious || diff === 0 ? "profit-flat" : diff > 0 ? "profit-up" : "profit-down");
   }
 }
 
@@ -639,6 +826,7 @@ function renderDashboard() {
   }
 
   renderSmartDashboard();
+  renderProfitDashboard();
   renderMultiLojaResumo();
 }
 
@@ -718,12 +906,15 @@ function renderHistory() {
       <td>${i.store || getActiveStoreName()}</td>
       <td>${i.operator || "—"}</td>
       <td><b>${eur(i.total)}</b></td>
-      <td>${eur(i.expected)}</td>
+      <td>${eur(i.initialValue || 0)}</td>
+      <td><span class="profit-badge ${Number(i.profit || (Number(i.total || 0) - Number(i.initialValue || 0))) >= 0 ? "good" : "bad"}">${eur(i.profit || (Number(i.total || 0) - Number(i.initialValue || 0)))}</span></td>
+      <td>${eur(i.previousTotal ?? i.expected)}</td>
       <td><span class="diff-badge ${getDiffLevel(i.diff)}">${eur(i.diff)} · ${getDiffLabel(i.diff)}</span></td>
-      <td><button class="delete-row" data-delete="${i.id || i.localId}">Apagar</button></td>
+      <td><button class="mini-btn" data-edit="${i.id || i.localId}">Editar</button> <button class="delete-row" data-delete="${i.id || i.localId}">Apagar</button></td>
     </tr>
-  `).join("") || `<tr><td colspan="7" class="muted">Sem resultados.</td></tr>`;
+  `).join("") || `<tr><td colspan="9" class="muted">Sem resultados.</td></tr>`;
 
+  document.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => openEditClosure(b.dataset.edit)));
   document.querySelectorAll("[data-delete]").forEach(b => b.addEventListener("click", () => deleteClosure(b.dataset.delete)));
 }
 
@@ -1022,6 +1213,7 @@ function bindEvents() {
   });
 
   $("expected")?.addEventListener("input", calculate);
+  $("initialValue")?.addEventListener("input", calculate);
   $("saveClosure")?.addEventListener("click", saveClosure);
   $("clearForm")?.addEventListener("click", () => clearForm(true));
   $("search")?.addEventListener("input", renderHistory);
@@ -1035,6 +1227,11 @@ function bindEvents() {
   $("clearUserForm")?.addEventListener("click", clearUserForm);
   $("refreshUsers")?.addEventListener("click", loadUsers);
   $("createAuthUserBtn")?.addEventListener("click", createAuthUserAndFillUid);
+
+  $("closeEditClosure")?.addEventListener("click", closeEditClosure);
+  $("cancelEditClosure")?.addEventListener("click", closeEditClosure);
+  $("saveEditClosure")?.addEventListener("click", saveEditedClosure);
+
 }
 
 document.addEventListener("click", event => {

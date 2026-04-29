@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#5b0b68" />
   <title>Desktop - Brinka Firebase — Fecho de Caixa</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="./style.css?v=auto-ajuste-ecra" />
+  <link rel="stylesheet" href="./style.css?v=valor-inicial-lucro" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Brinka" />
@@ -30,7 +30,9 @@
         <p class="eyebrow">Acesso seguro</p>
         <h2>Entrar na app</h2>
 
-        <label class="wide-label">
+        <input id="expected" type="hidden" value="0" />
+
+                <label class="wide-label">
           <span>Email</span>
           <input id="loginEmail" type="email" placeholder="email@loja.com" autocomplete="email" />
         </label>
@@ -154,6 +156,31 @@
           </article>
 
 
+
+          <article class="panel profit-panel" id="profitPanel">
+            <div class="panel-title">
+              <h3>Lucro diário</h3>
+              <span class="pill" id="profitStatus">Sem comparação</span>
+            </div>
+
+            <div class="profit-grid">
+              <div class="profit-box">
+                <span>Fecho atual</span>
+                <strong id="profitToday">0,00 €</strong>
+              </div>
+              <div class="profit-box">
+                <span>Fecho dia anterior</span>
+                <strong id="profitYesterday">0,00 €</strong>
+              </div>
+              <div class="profit-box main">
+                <span>Lucro / Diferença</span>
+                <strong id="profitDiff">0,00 €</strong>
+              </div>
+            </div>
+
+            <p class="profit-note" id="profitNote">Guarda fechos para começar a comparar.</p>
+          </article>
+
           <article class="panel admin-page" id="multiLojaPanel">
             <div class="panel-title">
               <h3>Resumo Multi-Loja</h3>
@@ -170,13 +197,13 @@
               <article class="panel">
                 <div class="panel-title">
                   <h3>Dados do fecho</h3>
-                  <span class="pill" id="diffBadge">Sem esperado</span>
+                  <span class="pill" id="diffBadge">Comparação</span>
                 </div>
 
                 <div class="form-grid">
                   <label><span>Utilizador</span><input id="operator" type="text" placeholder="Ex: Ricardo" /></label>
                   <label><span>Loja</span><select id="store"></select></label>
-                  <label><span>Valor esperado</span><input id="expected" type="number" step="0.01" min="0" placeholder="0.00" /></label>
+                  <label><span>Valor inicial</span><input id="initialValue" type="number" step="0.01" min="0" placeholder="0.00" /></label>
                   <label><span>Data</span><input id="closeDate" type="datetime-local" /></label>
                 </div>
 
@@ -205,8 +232,10 @@
                 <h2 id="grandTotal">0,00 €</h2>
                 <div class="total-row"><span>Notas</span><strong id="sumNotes">0,00 €</strong></div>
                 <div class="total-row"><span>Moedas</span><strong id="sumCoins">0,00 €</strong></div>
-                <div class="total-row"><span>Esperado</span><strong id="sumExpected">0,00 €</strong></div>
-                <div class="total-row highlight"><span>Diferença</span><strong id="sumDiff">0,00 €</strong></div>
+                <div class="total-row"><span>Fecho anterior</span><strong id="sumExpected">0,00 €</strong></div>
+                <div class="total-row"><span>Valor inicial</span><strong id="sumInitial">0,00 €</strong></div>
+                <div class="total-row highlight"><span>Lucro</span><strong id="sumProfit">0,00 €</strong></div>
+                <div class="total-row"><span>Diferença</span><strong id="sumDiff">0,00 €</strong></div>
                 <button class="primary-btn full" id="saveClosure">Guardar fecho</button>
                 <button class="soft-btn full" id="clearForm">Limpar formulário</button>
               </article>
@@ -238,7 +267,7 @@
               <table>
                 <thead>
                   <tr>
-                    <th>Data</th><th>Loja</th><th>Utilizador</th><th>Total</th><th>Esperado</th><th>Diferença</th><th></th>
+                    <th>Data</th><th>Loja</th><th>Utilizador</th><th>Total</th><th>Valor inicial</th><th>Lucro</th><th>Fecho anterior</th><th>Diferença</th><th></th>
                   </tr>
                 </thead>
                 <tbody id="historyTable"></tbody>
@@ -394,6 +423,39 @@
   <div class="toast" id="toast"></div>
 
   <script src="./firebase-config.js?v=scrollfix-final"></script>
-  <script type="module" src="./app.js?v=auto-ajuste-ecra"></script>
+  <script type="module" src="./app.js?v=valor-inicial-lucro"></script>
+
+  <section class="edit-modal hidden" id="editClosureModal" aria-hidden="true">
+    <div class="edit-card">
+      <div class="edit-head">
+        <div>
+          <p class="eyebrow">Editar fecho</p>
+          <h3>Corrigir registo</h3>
+        </div>
+        <button class="edit-close" id="closeEditClosure" type="button">×</button>
+      </div>
+
+      <input id="editClosureId" type="hidden" />
+
+      <div class="form-grid">
+        <label><span>Utilizador</span><input id="editOperator" type="text" /></label>
+        <label><span>Data</span><input id="editDate" type="datetime-local" /></label>
+        <label><span>Total</span><input id="editTotal" type="number" step="0.01" min="0" /></label>
+        <label><span>Valor inicial</span><input id="editInitialValue" type="number" step="0.01" min="0" /></label>
+        <label><span>Fecho anterior</span><input id="editPrevious" type="number" step="0.01" min="0" disabled /></label>
+      </div>
+
+      <label class="wide-label">
+        <span>Observações</span>
+        <textarea id="editObs" rows="3" placeholder="Motivo da alteração..."></textarea>
+      </label>
+
+      <div class="edit-actions">
+        <button class="soft-btn" id="cancelEditClosure" type="button">Cancelar</button>
+        <button class="primary-btn" id="saveEditClosure" type="button">Guardar alteração</button>
+      </div>
+    </div>
+  </section>
+
 </body>
 </html>

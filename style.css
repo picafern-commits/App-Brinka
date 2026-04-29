@@ -1106,3 +1106,180 @@ body {
     border-radius: 22px !important;
   }
 }
+
+
+/* Editar fechos + sem valor esperado manual */
+#expected[type="hidden"] {
+  display: none !important;
+}
+
+.edit-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(10, 0, 18, .78);
+  backdrop-filter: blur(16px);
+}
+
+.edit-modal.hidden {
+  display: none !important;
+}
+
+.edit-card {
+  width: min(760px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,.16);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255,149,0,.16), transparent 22rem),
+    linear-gradient(145deg, rgba(63, 32, 68, .98), rgba(28, 0, 36, .98));
+  box-shadow: 0 30px 90px rgba(0,0,0,.45);
+  padding: 18px;
+}
+
+.edit-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.edit-head h3 {
+  margin: 0;
+  font-size: 26px;
+}
+
+.edit-close {
+  width: 42px;
+  height: 42px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  color: var(--text);
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.edit-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.edit-actions button {
+  flex: 1;
+}
+
+@media (max-width: 520px) {
+  .edit-card {
+    padding: 14px;
+    border-radius: 24px;
+  }
+  .edit-actions {
+    flex-direction: column;
+  }
+}
+
+
+/* Lucro diário */
+.profit-panel {
+  margin-top: 16px;
+}
+
+.profit-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.profit-box {
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.055);
+}
+
+.profit-box span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.profit-box strong {
+  font-size: 26px;
+  letter-spacing: -.04em;
+}
+
+.profit-box.main {
+  background: rgba(255,149,0,.10);
+  border-color: rgba(255,149,0,.28);
+}
+
+.profit-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-weight: 850;
+  line-height: 1.35;
+}
+
+.profit-good {
+  color: #9ff2c5 !important;
+  background: rgba(49,210,124,.16) !important;
+}
+
+.profit-bad {
+  color: #ffd0d7 !important;
+  background: rgba(255,92,114,.16) !important;
+}
+
+.profit-neutral {
+  color: #ffd7a0 !important;
+  background: rgba(255,149,0,.15) !important;
+}
+
+.profit-up .profit-box.main strong {
+  color: #9ff2c5;
+}
+
+.profit-down .profit-box.main strong {
+  color: #ffd0d7;
+}
+
+@media (max-width: 850px) {
+  .profit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Valor inicial + lucro por fecho */
+.profit-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.profit-badge.good {
+  color: #9ff2c5;
+  background: rgba(49,210,124,.12);
+  border-color: rgba(49,210,124,.28);
+}
+
+.profit-badge.bad {
+  color: #ffd0d7;
+  background: rgba(255,92,114,.14);
+  border-color: rgba(255,92,114,.30);
+}
