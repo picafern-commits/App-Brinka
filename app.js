@@ -669,51 +669,28 @@ function closeEditClosure() {
 
 async function saveEditedClosure() {
   const id = $("editClosureId")?.value;
-  if (!id) return toast("Fecho inválido");
 
-  const item = state.closures.find(i => (i.id || i.localId) === id);
-  if (!item) return toast("Fecho não encontrado");
-
-  const dateIso = $("editDate")?.value ? new Date($("editDate").value).toISOString() : item.dateIso;
   const total = Number($("editTotal")?.value || 0);
-  const previous = getPreviousClosureValue(id, dateIso);
   const initialValue = Number($("editInitialValue")?.value || 0);
   const profit = total - initialValue;
-  const diff = total - previous;
-
-  if (total <= 0) return toast("Total inválido");
-
-  const obs = $("editObs")?.value.trim() || "";
-  if (Math.abs(diff) >= 0.005 && previous > 0 && obs.length < 3) {
-    toast("Mete uma observação para justificar a diferença");
-    $("editObs")?.focus();
-    return;
-  }
 
   try {
-    await updateDoc(doc(state.db, "brinka_lojas", getActiveStoreId(), "fechos", id), {
-      operator: $("editOperator")?.value.trim() || item.operator || "",
-      dateIso,
-      dateLabel: new Date(dateIso).toLocaleString("pt-PT", { dateStyle: "short", timeStyle: "short" }),
-      total,
-      initialValue,
-      profit,
-      expected: previous,
-      previousTotal: previous,
-      diff,
-      diffLevel: getDiffLevel(diff),
-      diffLabel: getDiffLabel(diff),
-      observation: obs,
-      edited: true,
-      editedAt: serverTimestamp(),
-      editedBy: state.user?.email || ""
-    });
+    await updateDoc(
+      doc(state.db, "brinka_lojas", getActiveStoreId(), "fechos", id),
+      {
+        total,
+        initialValue,
+        profit,
+        updatedAt: serverTimestamp()
+      }
+    );
 
     closeEditClosure();
     toast("Fecho atualizado");
-  } catch (error) {
-    console.error(error);
-    toast("Erro ao editar fecho");
+
+  } catch (e) {
+    console.error("ERRO AO EDITAR:", e);
+    alert("Erro ao editar: " + e.message);
   }
 }
 
@@ -985,7 +962,7 @@ function renderSettings() {
 
 function renderAll() {
   renderDashboard();
-  renderHistory();
+  // REMOVIDO render manual
   renderReports();
   renderSettings();
   renderAdminVisibility();
