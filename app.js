@@ -434,7 +434,7 @@ async function createDailyBackup(reason = "auto") {
       updatedAt: Date.now(),
       totalFechos: state.closures.length,
       totalGeral: total,
-      totalDiferencas: diff,
+      totals: diff,
       closures: state.closures
     }, { merge: true });
   } catch (error) {
@@ -559,8 +559,6 @@ function getDiffLevel(diff) {
 function getDiffLabel(diff) {
   const level = getDiffLevel(diff);
   if (level === "ok") return "Certo";
-  if (level === "warning") return "Diferença pequena";
-  return "Diferença grave";
 }
 
 function validateDiffBeforeSave(calc) {
@@ -573,7 +571,6 @@ function validateDiffBeforeSave(calc) {
     return false;
   }
 
-  if (diffAbs > 20 && !confirm(`Diferença grave de ${eur(diffAbs)}. Queres guardar?`)) return false;
   return true;
 }
 
@@ -858,7 +855,6 @@ async function renderMultiLojaResumo() {
       const todayItems = items.filter(i => i.dateIso && new Date(i.dateIso).toLocaleDateString("pt-PT") === today);
       const totalHoje = todayItems.reduce((s, i) => s + Number(i.total || 0), 0);
       const diffHoje = todayItems.reduce((s, i) => s + Number(i.diff || 0), 0);
-      cards.push(`<div class="store-summary-card"><h4>${store.name}</h4><strong>${eur(totalHoje)}</strong><div class="store-summary-line"><span>Fechos hoje</span><b>${todayItems.length}</b></div><div class="store-summary-line"><span>Diferença hoje</span><b>${eur(diffHoje)}</b></div></div>`);
     }
     $("multiStoreGrid").innerHTML = cards.join("");
   } catch (error) {
@@ -1010,7 +1006,7 @@ function saveSettings() {
 }
 
 function exportCsv() {
-  const header = ["Data","Loja","Utilizador","Total","Esperado","Diferenca","Observacoes"];
+  const header = ["Data","Loja","Utilizador","Total","Esperado","","Observacoes"];
   const rows = state.closures.map(i => [i.dateLabel,i.store,i.operator,i.total,i.expected,i.diff,i.observation || ""].map(v => `"${String(v).replaceAll('"','""')}"`).join(";"));
   const blob = new Blob([[header.join(";"), ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");
