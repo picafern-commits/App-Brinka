@@ -887,7 +887,14 @@ function renderHistory() {
       <td><span class="profit-badge ${Number(i.profit || (Number(i.total || 0) - Number(i.initialValue || 0))) >= 0 ? "good" : "bad"}">${eur(i.profit || (Number(i.total || 0) - Number(i.initialValue || 0)))}</span></td>
       <td>${eur(i.previousTotal ?? i.expected)}</td>
       <td><span class="diff-badge ${getDiffLevel(i.diff)}">${eur(i.diff)} · ${getDiffLabel(i.diff)}</span></td>
-      <td><button class="mini-btn" data-edit="${i.id || i.localId}">Editar</button> <button class="delete-row" data-delete="${i.id || i.localId}">Editar</button><button class="btn btn-danger">Apagar</button></td>
+      <td class="action-buttons">
+        <button class="mini-btn action-edit" data-edit="${i.id || i.localId}">
+          Editar
+        </button>
+        <button class="delete-row action-delete" data-delete="${i.id || i.localId}">
+          Apagar
+        </button>
+      </td>
     </tr>
   `).join("") || `<tr><td colspan="9" class="muted">Sem resultados.</td></tr>`;
 

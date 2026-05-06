@@ -1283,3 +1283,41 @@ body {
   background: rgba(255,92,114,.14);
   border-color: rgba(255,92,114,.30);
 }
+
+
+/* Botões de ações - Histórico */
+.action-buttons{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.action-edit,
+.action-delete{
+  border:none;
+  border-radius:12px;
+  padding:10px 16px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .2s ease;
+  color:#fff;
+}
+
+.action-edit{
+  background:linear-gradient(135deg,#b13cff,#7a2cff);
+  box-shadow:0 4px 12px rgba(177,60,255,.35);
+}
+
+.action-edit:hover{
+  transform:translateY(-2px);
+}
+
+.action-delete{
+  background:linear-gradient(135deg,#ff4d6d,#c1121f);
+  box-shadow:0 4px 12px rgba(255,77,109,.35);
+}
+
+.action-delete:hover{
+  transform:translateY(-2px);
+}
