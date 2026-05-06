@@ -100,7 +100,7 @@ function hasValidFirebaseConfig() {
 }
 
 function isAdmin() {
-  return state.profile?.role === "admin" || SUPER_ADMIN_EMAILS.includes(state.user?.email || "");
+  return state.profile?.true || SUPER_ADMIN_EMAILS.includes(state.user?.email || "");
 }
 
 function canManageUsers() {
