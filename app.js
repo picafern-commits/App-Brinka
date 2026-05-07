@@ -559,8 +559,8 @@ function getDiffLevel(diff) {
 function getDiffLabel(diff) {
   const level = getDiffLevel(diff);
   if (level === "ok") return "Certo";
-  if (level === "warning") return "Diferença pequena";
-  return "Diferença grave";
+  if (level === "warning") return "";
+  return "";
 }
 
 function validateDiffBeforeSave(calc) {
@@ -573,7 +573,7 @@ function validateDiffBeforeSave(calc) {
     return false;
   }
 
-  if (diffAbs > 20 && !confirm(`Diferença grave de ${eur(diffAbs)}. Queres guardar?`)) return false;
+  if (diffAbs > 20 && !confirm(` de ${eur(diffAbs)}. Queres guardar?`)) return false;
   return true;
 }
 
