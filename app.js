@@ -969,7 +969,7 @@ function renderSettings() {
 
 function renderAll() {
   renderDashboard();
-  // REMOVIDO render manual
+  renderHistory();
   renderReports();
   renderSettings();
   renderAdminVisibility();
