@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#5b0b68" />
   <title>Desktop - Brinka Firebase — Fecho de Caixa</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="./style.css?v=valor-inicial-lucro" />
+  <link rel="stylesheet" href="./style.css?v=apontamentos-cores-backup" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Brinka" />
@@ -69,6 +69,7 @@
       <nav class="nav-list">
         <button class="nav-item active" data-page="dashboard"><span>📊</span><b>Dashboard</b></button>
         <button class="nav-item" data-page="fecho"><span>💶</span><b>Fecho de Caixa</b></button>
+        <button class="nav-item" data-page="apontamentos"><span>✎</span><b>Apontamentos</b></button>
         <button class="nav-item" data-page="historico"><span>🧾</span><b>Histórico</b></button>
         <button class="nav-item" data-page="relatorios"><span>📈</span><b>Relatórios</b></button>
         <button class="nav-item admin-only" data-page="config"><span>⚙️</span><b>Configurações</b></button>
@@ -255,25 +256,53 @@
 
             <div class="filters">
               <input id="search" type="search" placeholder="Pesquisar por data, loja ou utilizador..." />
-              <select id="statusFilter">
-                <option value="">Todos</option>
-                <option value="certo">Certo</option>
-                <option value="sobra">Sobra</option>
-                <option value="falta">Falta</option>
-              </select>
             </div>
 
             <div class="table-wrap">
               <table>
                 <thead>
                   <tr>
-                    <th>Data</th><th>Loja</th><th>Utilizador</th><th>Total</th><th>Valor inicial</th><th>Lucro</th><th>Fecho anterior</th><th>Diferença</th><th></th>
+                    <th>Data</th><th>Loja</th><th>Utilizador</th><th>Total</th><th>Valor inicial</th><th>Lucro</th><th></th>
                   </tr>
                 </thead>
                 <tbody id="historyTable"></tbody>
               </table>
             </div>
           </article>
+        </section>
+
+        <section class="page" id="page-apontamentos">
+          <div class="notes-layout">
+            <article class="panel note-editor">
+              <div class="panel-title">
+                <h3>Novo apontamento</h3>
+                <span class="pill" id="notesCount">0 notas</span>
+              </div>
+
+              <label class="wide-label">
+                <span>Título</span>
+                <input id="noteTitle" type="text" placeholder="Ex: Ideias para amanhã" />
+              </label>
+
+              <label class="wide-label">
+                <span>Apontamento</span>
+                <textarea id="noteBody" rows="12" placeholder="Escreve aqui o que não queres esquecer..."></textarea>
+              </label>
+
+              <div class="inline-actions note-actions">
+                <button class="primary-btn" id="saveNote" type="button">Guardar apontamento</button>
+                <button class="soft-btn" id="clearNote" type="button">Limpar</button>
+              </div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-title">
+                <h3>Apontamentos guardados</h3>
+                <button class="soft-btn" id="exportNotes" type="button">Exportar</button>
+              </div>
+              <div id="notesList" class="cards-list"></div>
+            </article>
+          </div>
         </section>
 
         <section class="page" id="page-relatorios">
@@ -297,6 +326,41 @@
               <label class="wide-label"><span>Nome da loja por defeito</span><input id="defaultStore" type="text" placeholder="Ex: Brinka Braga" /></label>
               <label class="wide-label"><span>Valor esperado por defeito</span><input id="defaultExpected" type="number" step="0.01" min="0" placeholder="0.00" /></label>
               <button class="primary-btn full" id="saveSettings">Guardar configurações</button>
+            </article>
+
+            <article class="panel theme-lab">
+              <div class="panel-title">
+                <h3>Cores da app</h3>
+                <span class="pill" id="themeName">Brinka</span>
+              </div>
+              <div class="theme-preview">
+                <div class="theme-sample"></div>
+                <div>
+                  <strong>Visual ativo</strong>
+                  <span>A cor muda botões, fundos, foco e navegação.</span>
+                </div>
+              </div>
+              <div class="palette-grid" id="paletteGrid"></div>
+              <label class="wide-label color-field">
+                <span>Cor personalizada</span>
+                <input id="customAccent" type="color" value="#c2188c" />
+              </label>
+              <button class="soft-btn full" id="applyCustomTheme" type="button">Aplicar cor personalizada</button>
+            </article>
+
+            <article class="panel backup-panel">
+              <div class="panel-title">
+                <h3>Auto backup</h3>
+                <span class="pill" id="backupServiceStatus">A verificar</span>
+              </div>
+              <div class="backup-grid">
+                <div><span>Estado</span><strong id="backupState">Sem login</strong></div>
+                <div><span>Último backup</span><strong id="backupLastRun">Ainda nenhum</strong></div>
+                <div><span>Registos protegidos</span><strong id="backupItems">0</strong></div>
+                <div><span>Destino</span><strong id="backupTarget">Firebase</strong></div>
+              </div>
+              <p class="muted" id="backupInfo">O serviço cria backup automático quando os fechos sincronizam.</p>
+              <button class="primary-btn full" id="runBackupNow" type="button">Fazer backup agora</button>
             </article>
 
             
@@ -423,7 +487,7 @@
   <div class="toast" id="toast"></div>
 
   <script src="./firebase-config.js?v=scrollfix-final"></script>
-  <script type="module" src="./app.js?v=valor-inicial-lucro"></script>
+  <script type="module" src="./app.js?v=apontamentos-cores-backup"></script>
 
   <section class="edit-modal hidden" id="editClosureModal" aria-hidden="true">
     <div class="edit-card">
