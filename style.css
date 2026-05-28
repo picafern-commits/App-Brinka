@@ -1590,10 +1590,10 @@ select:focus {
 
 body.resolution-forced{
   min-height:100vh!important;
-  display:block!important;
+  display:grid!important;
+  place-items:start center!important;
   padding:18px!important;
-  overflow-x:hidden!important;
-  overflow-y:auto!important;
+  overflow:auto!important;
 }
 
 body.resolution-forced .app-bg{
@@ -1601,24 +1601,15 @@ body.resolution-forced .app-bg{
 }
 
 body.resolution-forced .app-layout{
-  width:var(--app-device-width)!important;
+  width:min(var(--app-device-width),100%)!important;
   height:var(--app-device-height)!important;
   min-height:0!important;
   max-height:none!important;
   overflow:hidden!important;
-  transform:scale(var(--app-device-scale,1))!important;
-  transform-origin:top center!important;
-  margin:0 auto!important;
   border:1px solid var(--line)!important;
   border-radius:24px!important;
   box-shadow:0 28px 80px color-mix(in srgb, var(--pink) 24%, transparent)!important;
   background:linear-gradient(135deg,var(--bg),var(--bg2))!important;
-}
-
-body.resolution-forced::after{
-  content:"";
-  display:block;
-  height:max(0px, calc(var(--app-device-scaled-height) - 100vh + 54px));
 }
 
 body.resolution-forced .sidebar{
@@ -1635,14 +1626,12 @@ body.resolution-forced .main-area{
 body.resolution-forced .login-screen{
   position:fixed!important;
   inset:18px!important;
-  width:var(--app-device-width)!important;
-  height:var(--app-device-height)!important;
+  width:min(var(--app-device-width),calc(100vw - 36px))!important;
+  height:min(var(--app-device-height),calc(100vh - 36px))!important;
   margin:auto!important;
   border-radius:24px!important;
   border:1px solid var(--line)!important;
   overflow:auto!important;
-  transform:scale(var(--app-device-scale,1))!important;
-  transform-origin:center!important;
 }
 
 body.resolution-forced.screen-mobile .app-layout,
