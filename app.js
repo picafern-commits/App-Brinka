@@ -37,20 +37,25 @@ const coinValues = [2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]; const defaultStorePr
 } function getActiveScreenProfile() { const selected = state.settings.screenProfile || "auto"; if (selected === "custom") { const width = Number(state.settings.customScreenWidth || 0); const height = Number(state.settings.customScreenHeight || 0); return { key: "custom", label: width && height ? `${width}×${height} Personalizada` : "Personalizada", width, height }; } const profile = screenProfiles[selected] || screenProfiles.auto; if (selected !== "auto") return { key: selected, ...profile }; return { key: "auto", label: "Automático", width: window.innerWidth || document.documentElement.clientWidth || 0, height: window.innerHeight || document.documentElement.clientHeight || 0 };
 } function screenTypeFromWidth(width) { return width >= 1180 ? "desktop" : width >= 760 ? "tablet" : "mobile";
 } function applyScreenLayout(profile) {
-  const root = document.documentElement;
-  const selectedKey = profile?.key || "auto";
-  const isAuto = selectedKey === "auto";
-  const viewportW = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 0);
-  const viewportH = Math.max(420, window.innerHeight || document.documentElement.clientHeight || 0);
+  const isAuto = profile.key === "auto";
+  const viewportW = Math.max(320, Math.floor(window.visualViewport?.width || window.innerWidth || document.documentElement.clientWidth || 0));
+  const viewportH = Math.max(420, Math.floor(window.visualViewport?.height || window.innerHeight || document.documentElement.clientHeight || 0));
   const width = isAuto ? viewportW : Math.max(320, Number(profile.width || viewportW || 0));
   const height = isAuto ? viewportH : Math.max(420, Number(profile.height || viewportH || 0));
   const type = screenTypeFromWidth(width);
+  const root = document.documentElement;
+
   const sidebar = width >= 2560 ? 320 : width >= 1440 ? 300 : width >= 1180 ? 286 : 0;
   const padding = width >= 2560 ? 38 : width >= 1440 ? 30 : width >= 1180 ? 24 : width >= 760 ? 20 : 14;
   const total = width >= 2560 ? 420 : width >= 1440 ? 380 : width >= 1180 ? 360 : 0;
-  const margin = isAuto ? 0 : 22;
-  const fitW = Math.max(320, viewportW - margin);
-  const fitH = Math.max(420, viewportH - margin);
+  const content = width >= 2560 ? "1840px" : width >= 1920 ? "1680px" : width >= 1440 ? "1500px" : "none";
+
+  // Sistema tirado/replicado da App-Pai: a resolução escolhida é uma resolução
+  // virtual. A app é reduzida proporcionalmente para caber sempre dentro da
+  // janela real, centrada por CSS com position:fixed + translate(-50%,-50%).
+  const safeGap = 0;
+  const fitW = Math.max(320, viewportW - safeGap);
+  const fitH = Math.max(420, viewportH - safeGap);
   const scale = isAuto ? 1 : Math.min(fitW / width, fitH / height, 1);
   const scaledW = Math.floor(width * scale);
   const scaledH = Math.floor(height * scale);
@@ -58,26 +63,21 @@ const coinValues = [2, 1, 0.5, 0.2, 0.1, 0.05, 0.02, 0.01]; const defaultStorePr
   root.style.setProperty("--device-sidebar", `${sidebar}px`);
   root.style.setProperty("--device-padding", `${padding}px`);
   root.style.setProperty("--device-total", `${total}px`);
-  root.style.setProperty("--device-content-max", "none");
+  root.style.setProperty("--device-content-max", content);
   root.style.setProperty("--app-device-width", isAuto ? "100vw" : `${width}px`);
   root.style.setProperty("--app-device-height", isAuto ? "100vh" : `${height}px`);
   root.style.setProperty("--app-device-scale", String(scale));
-  root.style.setProperty("--app-device-scaled-width", `${scaledW}px`);
-  root.style.setProperty("--app-device-scaled-height", `${scaledH}px`);
+  root.style.setProperty("--app-device-scaled-width", isAuto ? "100vw" : `${scaledW}px`);
+  root.style.setProperty("--app-device-scaled-height", isAuto ? "100vh" : `${scaledH}px`);
 
   document.body.classList.toggle("resolution-forced", !isAuto);
-  document.body.classList.remove("screen-desktop", "screen-tablet", "screen-mobile", "ui-auto", "ui-laptop", "ui-compact", "ui-normal", "ui-large");
+  document.body.classList.remove("screen-desktop", "screen-tablet", "screen-mobile");
   document.body.classList.add(`screen-${type}`);
-  if(isAuto) document.body.classList.add("ui-auto");
-  else if(width <= 1366 && height <= 768) document.body.classList.add("ui-laptop");
-  else if(width <= 1440) document.body.classList.add("ui-compact");
-  else if(width >= 1920) document.body.classList.add("ui-large");
-  else document.body.classList.add("ui-normal");
   document.body.dataset.screen = type;
-  document.body.dataset.screenProfile = selectedKey;
-
-  if ($("screenType")) $("screenType").textContent = `${type === "desktop" ? "Desktop" : type === "tablet" ? "Tablet" : "Mobile"} · ${isAuto ? "Auto" : `${width}×${height}`}${!isAuto && scale < 1 ? ` · centrado ${Math.round(scale * 100)}%` : ""}`;
-} function updateScreenType() { const profile = getActiveScreenProfile(); applyScreenLayout(profile); renderScreenSettings();
+  document.body.dataset.screenProfile = profile.key || "auto";
+  if ($("screenType")) $("screenType").textContent = `${type === "desktop" ? "Desktop" : type === "tablet" ? "Tablet" : "Mobile"} · ${isAuto ? "Auto" : `${width}×${height}`}${!isAuto && scale < 1 ? ` · ajustado ${Math.round(scale * 100)}%` : ""}`;
+}
+function updateScreenType() { const profile = getActiveScreenProfile(); applyScreenLayout(profile); renderScreenSettings();
 } function renderScreenSettings() { if ($("screenDetected")) $("screenDetected").textContent = `${window.innerWidth || 0}×${window.innerHeight || 0}`; const active = getActiveScreenProfile(); if ($("screenProfileStatus")) $("screenProfileStatus").textContent = active.key === "auto" ? "Automático" : active.label; if ($("screenActiveProfile")) $("screenActiveProfile").textContent = active.key === "auto" ? "Automático" : active.label; if ($("screenProfile")) { const current = state.settings.screenProfile || "auto"; if (!$("screenProfile").options.length) $("screenProfile").innerHTML = Object.entries(screenProfiles).map(([key, value]) => `<option value="${key}">${value.label}</option>`).join(""); $("screenProfile").value = current; } if ($("customScreenWidth")) $("customScreenWidth").value = state.settings.customScreenWidth || ""; if ($("customScreenHeight")) $("customScreenHeight").value = state.settings.customScreenHeight || ""; if ($("screenCustomFields")) $("screenCustomFields").style.display = (state.settings.screenProfile === "custom") ? "" : "none";
 } function saveScreenProfile() { state.settings.screenProfile = $("screenProfile")?.value || "auto"; state.settings.customScreenWidth = $("customScreenWidth")?.value || ""; state.settings.customScreenHeight = $("customScreenHeight")?.value || ""; if (state.settings.screenProfile === "custom" && (!Number(state.settings.customScreenWidth) || !Number(state.settings.customScreenHeight))) return toast("Mete largura e altura da resolução."); saveLocal(); updateScreenType(); toast("Resolução guardada neste dispositivo");
 } function resetScreenProfile() { state.settings.screenProfile = "auto"; state.settings.customScreenWidth = ""; state.settings.customScreenHeight = ""; saveLocal(); updateScreenType(); toast("Resolução em automático");
