@@ -1649,268 +1649,102 @@ body.resolution-forced.screen-tablet .app-layout{
   }
 }
 
-/* =========================================================
-   FIX DEFINITIVO: cards nunca passam para fora do ecrã
-   O problema não era o scroll: eram grids fixas em 4 colunas.
-   Agora os cards adaptam-se à largura real disponível.
-   ========================================================= */
-html,
-body,
-.app-layout,
-.main-area,
-.content,
-.page {
-  width: 100% !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
+
+/* === FIX FINAL: páginas sempre dentro da janela ===
+   O perfil 1920x1080 é só um perfil visual. A app nunca pode ficar com
+   1920px reais se a janela útil for menor, senão os cards saem para fora. */
+html, body{
+  width:100% !important;
+  max-width:100vw !important;
+  overflow-x:hidden !important;
 }
-
-.main-area {
-  min-width: 0 !important;
-}
-
-.content {
-  min-width: 0 !important;
-  container-type: inline-size;
-}
-
-.topbar,
-.left-top,
-.top-actions,
-.inline-actions {
-  min-width: 0 !important;
-  max-width: 100% !important;
-}
-
-.topbar {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: flex-start !important;
-}
-
-.top-actions {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: flex-end !important;
-}
-
-.user-badge,
-.screen-badge,
-.pill,
-.soft-btn,
-.primary-btn {
-  max-width: 100% !important;
-  min-width: 0 !important;
-}
-
-.user-badge,
-.screen-badge,
-.pill {
-  white-space: normal !important;
-  overflow-wrap: anywhere !important;
-}
-
-.hero-grid,
-.hero-grid.small,
-.panel-grid,
-.checkout-grid,
-.money-grid,
-.form-grid,
-.intel-grid,
-.multi-store-grid {
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-}
-
-.hero-grid,
-.hero-grid.small {
-  display: grid !important;
-  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr)) !important;
-  gap: 16px !important;
-}
-
-.hero-card {
-  grid-column: span 2;
-}
-
-.panel-grid {
-  display: grid !important;
-  grid-template-columns: minmax(0, 1.25fr) minmax(min(320px, 100%), .75fr) !important;
-  gap: 16px !important;
-}
-
-.hero-card,
-.metric-card,
-.panel,
-.total-card,
-.store-summary-card,
-.intel-card {
-  min-width: 0 !important;
-  max-width: 100% !important;
-  overflow: hidden !important;
-}
-
-.hero-card h2,
-.metric-card strong,
-.panel strong,
-.summary-boxes strong,
-.list-item strong {
-  max-width: 100% !important;
-  overflow-wrap: anywhere !important;
-}
-
-@container (max-width: 980px) {
-  .hero-card {
-    grid-column: span 1 !important;
-  }
-
-  .panel-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-@container (max-width: 760px) {
-  .hero-grid,
-  .hero-grid.small,
-  .money-grid,
-  .form-grid,
-  .intel-grid,
-  .multi-store-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .top-actions {
-    justify-content: flex-start !important;
-  }
-}
-
-@media (max-width: 850px) {
-  .top-actions {
-    display: none !important;
-  }
-}
-
-
-/* =========================================================
-   FIX REAL: a app nunca usa largura maior que a janela visível
-   Antes: ao escolher 1920x1080, a app tentava desenhar 1920px
-   mesmo dentro de uma janela mais pequena, por isso os cards da
-   direita ficavam para fora do ecrã.
-   ========================================================= */
-html,
-body{
-  width:100vw!important;
-  max-width:100vw!important;
-  overflow-x:hidden!important;
-}
-
 body.resolution-forced{
-  width:100vw!important;
-  max-width:100vw!important;
-  min-width:0!important;
-  overflow-x:hidden!important;
-  align-items:stretch!important;
-  justify-content:flex-start!important;
+  display:block !important;
+  width:100% !important;
+  max-width:100vw !important;
+  min-height:100vh !important;
+  padding:0 !important;
+  margin:0 !important;
+  overflow:hidden !important;
 }
-
 body.resolution-forced .app-layout{
-  width:100vw!important;
-  max-width:100vw!important;
-  min-width:0!important;
-  height:100vh!important;
-  max-height:100vh!important;
-  border-radius:0!important;
-  border:0!important;
-  overflow:hidden!important;
-  grid-template-columns:minmax(240px,var(--device-sidebar,300px)) minmax(0,1fr)!important;
+  width:100vw !important;
+  max-width:100vw !important;
+  height:100vh !important;
+  max-height:100vh !important;
+  min-height:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  overflow:hidden !important;
 }
-
-body.resolution-forced.screen-mobile .app-layout,
-body.resolution-forced.screen-tablet .app-layout{
-  grid-template-columns:1fr!important;
+body.resolution-forced .sidebar{
+  height:100vh !important;
+  max-height:100vh !important;
+  overflow:auto !important;
 }
-
 body.resolution-forced .main-area{
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  height:100vh!important;
-  overflow-y:auto!important;
-  overflow-x:hidden!important;
+  width:100% !important;
+  min-width:0 !important;
+  height:100vh !important;
+  max-height:100vh !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
 }
-
-body.resolution-forced .content{
-  width:100%!important;
-  max-width:100%!important;
-  min-width:0!important;
-  margin:0!important;
+body.resolution-forced .login-screen{
+  inset:0 !important;
+  width:100vw !important;
+  max-width:100vw !important;
+  height:100vh !important;
+  max-height:100vh !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
 }
-
-body.resolution-forced .topbar{
-  width:100%!important;
-  max-width:100%!important;
-  display:grid!important;
-  grid-template-columns:minmax(0,1fr) auto!important;
-  gap:12px!important;
-  align-items:start!important;
+.app-layout,.main-area,.content,.page,.panel-grid,.checkout-grid,.hero-grid,.money-grid,.form-grid,.filters,.panel,.hero-card,.metric-card,.total-card{
+  min-width:0 !important;
+  max-width:100% !important;
 }
-
-body.resolution-forced .left-top,
-body.resolution-forced .top-actions{
-  min-width:0!important;
-  max-width:100%!important;
+.content{
+  width:100% !important;
+  margin-left:0 !important;
+  margin-right:0 !important;
 }
-
-body.resolution-forced .top-actions{
-  justify-content:end!important;
-  flex-wrap:wrap!important;
+.topbar{
+  width:100% !important;
+  min-width:0 !important;
+  display:flex !important;
+  flex-wrap:wrap !important;
+  align-items:flex-start !important;
+  justify-content:space-between !important;
 }
-
-body.resolution-forced #page-config .panel-grid{
-  grid-template-columns:minmax(0,1fr) minmax(260px,340px)!important;
-  align-items:start!important;
+.left-top,.top-actions,.inline-actions{
+  min-width:0 !important;
+  max-width:100% !important;
+  flex-wrap:wrap !important;
 }
-
-body.resolution-forced #page-config .panel:nth-child(1),
-body.resolution-forced #page-config .panel:nth-child(3),
-body.resolution-forced #page-config #storeNamesPanel{
-  grid-column:1 / 2!important;
+.top-actions{
+  justify-content:flex-end !important;
+  flex:1 1 320px !important;
 }
-
-body.resolution-forced #page-config .theme-lab,
-body.resolution-forced #page-config .backup-panel{
-  grid-column:2 / 3!important;
+.user-badge,.pill,.primary-btn,.soft-btn{
+  max-width:100% !important;
+  white-space:normal !important;
+  overflow-wrap:anywhere !important;
 }
-
-body.resolution-forced #page-config .panel{
-  min-width:0!important;
-  max-width:100%!important;
+@media (min-width:901px){
+  .main-area{padding:22px clamp(14px,1.6vw,30px) 34px !important;}
+  .panel-grid{grid-template-columns:minmax(0,1.45fr) minmax(260px,.55fr) !important;}
+  .checkout-grid{grid-template-columns:minmax(0,1fr) minmax(280px,360px) !important;}
+  .hero-grid{grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr)) !important;}
 }
-
-@media (max-width: 1500px){
-  body.resolution-forced .app-layout{
-    grid-template-columns:260px minmax(0,1fr)!important;
+@media (max-width:1280px){
+  .panel-grid,.checkout-grid,.hero-grid,.hero-grid.small,.money-grid,.form-grid,.filters{
+    grid-template-columns:1fr !important;
   }
-  body.resolution-forced #page-config .panel-grid{
-    grid-template-columns:1fr!important;
-  }
-  body.resolution-forced #page-config .panel,
-  body.resolution-forced #page-config .theme-lab,
-  body.resolution-forced #page-config .backup-panel,
-  body.resolution-forced #page-config #storeNamesPanel{
-    grid-column:auto!important;
-  }
+  .top-actions{justify-content:flex-start !important;}
 }
-
-@media (max-width: 1100px){
-  body.resolution-forced .app-layout{
-    grid-template-columns:1fr!important;
-  }
-  body.resolution-forced .topbar{
-    grid-template-columns:1fr!important;
-  }
-  body.resolution-forced .top-actions{
-    justify-content:start!important;
-  }
+@media (max-width:900px){
+  body.resolution-forced{overflow:hidden !important;}
+  body.resolution-forced .app-layout{grid-template-columns:1fr !important;}
+  .main-area{padding:16px 12px 80px !important;}
 }
