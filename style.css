@@ -1834,3 +1834,167 @@ body.resolution-forced .login-screen{
 body.resolution-forced .login-screen.hidden{
   display:none !important;
 }
+
+/* =========================================================
+   SISTEMA DE RESOLUÇÃO IMPORTADO/ADAPTADO DA APP-PAI
+   A resolução escolhida nas configurações fica centrada dentro
+   da janela real e é reduzida automaticamente quando necessário.
+   ========================================================= */
+body.ui-auto{
+  --ui-font:15px;--ui-font-small:12px;--ui-font-title:34px;--ui-space:14px;--ui-space-sm:8px;--ui-space-lg:20px;--ui-btn-height:42px;--ui-input-height:48px;--ui-radius:18px;--ui-card-padding:14px;--ui-table-font:14px;
+}
+body.ui-laptop{
+  --ui-font:12px;--ui-font-small:10px;--ui-font-title:24px;--ui-space:8px;--ui-space-sm:4px;--ui-space-lg:10px;--ui-btn-height:30px;--ui-input-height:34px;--ui-radius:10px;--ui-card-padding:8px;--ui-table-font:11px;
+}
+body.ui-compact{
+  --ui-font:13px;--ui-font-small:11px;--ui-font-title:28px;--ui-space:10px;--ui-space-sm:6px;--ui-space-lg:14px;--ui-btn-height:36px;--ui-input-height:40px;--ui-radius:14px;--ui-card-padding:10px;--ui-table-font:12px;
+}
+body.ui-normal{
+  --ui-font:15px;--ui-font-small:12px;--ui-font-title:34px;--ui-space:14px;--ui-space-sm:8px;--ui-space-lg:20px;--ui-btn-height:42px;--ui-input-height:48px;--ui-radius:18px;--ui-card-padding:14px;--ui-table-font:14px;
+}
+body.ui-large{
+  --ui-font:16px;--ui-font-small:13px;--ui-font-title:36px;--ui-space:16px;--ui-space-sm:9px;--ui-space-lg:22px;--ui-btn-height:46px;--ui-input-height:52px;--ui-radius:20px;--ui-card-padding:16px;--ui-table-font:15px;
+}
+body{font-size:var(--ui-font,15px)}
+.topbar h2{font-size:var(--ui-font-title,34px)!important}
+.subline,.field label,.muted,.pill,.screen-badge,.user-badge,small{font-size:var(--ui-font-small,12px)}
+.panel,.hero-card,.metric-card,.total-card,.checkout-main,.total-panel,.note-card,.modal-card{padding:var(--ui-card-padding,14px);border-radius:var(--ui-radius,18px)}
+button,.primary-btn,.ghost-btn,.nav-btn,.action-btn{min-height:var(--ui-btn-height,42px);font-size:var(--ui-font,15px)}
+input,select,textarea{min-height:var(--ui-input-height,48px);font-size:var(--ui-font,15px)}
+.table-wrap table,table{font-size:var(--ui-table-font,14px)}
+
+html,body{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+body:not(.resolution-forced){
+  overflow:auto!important;
+}
+body.resolution-forced{
+  width:100vw!important;
+  height:100vh!important;
+  min-width:0!important;
+  min-height:100vh!important;
+  padding:0!important;
+  margin:0!important;
+  overflow:hidden!important;
+  position:relative!important;
+  background:linear-gradient(135deg,var(--bg),var(--bg2))!important;
+}
+body.resolution-forced .app-layout{
+  position:fixed!important;
+  left:50%!important;
+  top:50%!important;
+  width:var(--app-device-width)!important;
+  height:var(--app-device-height)!important;
+  max-width:none!important;
+  max-height:none!important;
+  min-width:0!important;
+  min-height:0!important;
+  display:grid!important;
+  grid-template-columns:var(--device-sidebar,300px) minmax(0,1fr)!important;
+  overflow:hidden!important;
+  transform:translate(-50%,-50%) scale(var(--app-device-scale,1))!important;
+  transform-origin:center center!important;
+  border:1px solid var(--line)!important;
+  border-radius:24px!important;
+  box-shadow:0 28px 80px color-mix(in srgb,var(--pink) 24%,transparent)!important;
+  background:linear-gradient(135deg,var(--bg),var(--bg2))!important;
+}
+body.resolution-forced.screen-mobile .app-layout,
+body.resolution-forced.screen-tablet .app-layout{
+  grid-template-columns:1fr!important;
+}
+body.resolution-forced .main-area{
+  width:100%!important;
+  min-width:0!important;
+  height:var(--app-device-height)!important;
+  min-height:0!important;
+  max-height:var(--app-device-height)!important;
+  overflow:auto!important;
+  padding:var(--device-padding,30px)!important;
+  margin:0!important;
+}
+body.resolution-forced .sidebar{
+  position:relative!important;
+  width:var(--device-sidebar,300px)!important;
+  min-width:0!important;
+  height:var(--app-device-height)!important;
+  max-height:var(--app-device-height)!important;
+  overflow-y:auto!important;
+  transform:none!important;
+}
+body.resolution-forced.screen-mobile .sidebar,
+body.resolution-forced.screen-tablet .sidebar{
+  position:fixed!important;
+  left:0!important;top:0!important;bottom:auto!important;
+  width:min(310px,88vw)!important;
+  height:var(--app-device-height)!important;
+  z-index:30!important;
+  transform:translateX(-105%)!important;
+}
+body.resolution-forced.screen-mobile .sidebar.open,
+body.resolution-forced.screen-tablet .sidebar.open{transform:translateX(0)!important}
+body.resolution-forced .content,
+body.resolution-forced .page,
+body.resolution-forced .topbar,
+body.resolution-forced .left-top,
+body.resolution-forced .top-actions,
+body.resolution-forced .inline-actions,
+body.resolution-forced .hero-grid,
+body.resolution-forced .panel-grid,
+body.resolution-forced .checkout-grid,
+body.resolution-forced .form-grid,
+body.resolution-forced .filters{
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+body.resolution-forced .topbar,
+body.resolution-forced .top-actions,
+body.resolution-forced .left-top,
+body.resolution-forced .inline-actions{flex-wrap:wrap!important}
+body.resolution-forced .panel-grid{grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr)!important}
+body.resolution-forced .checkout-grid{grid-template-columns:minmax(0,1fr) minmax(260px,var(--device-total,380px))!important}
+body.resolution-forced.screen-mobile .panel-grid,
+body.resolution-forced.screen-tablet .panel-grid,
+body.resolution-forced.screen-mobile .checkout-grid,
+body.resolution-forced.screen-tablet .checkout-grid,
+body.resolution-forced.screen-mobile .hero-grid,
+body.resolution-forced.screen-tablet .hero-grid{grid-template-columns:1fr!important}
+body.resolution-forced .panel,
+body.resolution-forced .hero-card,
+body.resolution-forced .metric-card,
+body.resolution-forced .total-card,
+body.resolution-forced .checkout-main,
+body.resolution-forced .total-panel,
+body.resolution-forced .note-card{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+body.resolution-forced input,
+body.resolution-forced select,
+body.resolution-forced textarea,
+body.resolution-forced button{
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+body.resolution-forced .login-screen{
+  position:fixed!important;
+  left:50%!important;
+  top:50%!important;
+  width:var(--app-device-width)!important;
+  height:var(--app-device-height)!important;
+  max-width:none!important;
+  max-height:none!important;
+  transform:translate(-50%,-50%) scale(var(--app-device-scale,1))!important;
+  transform-origin:center center!important;
+  border:1px solid var(--line)!important;
+  border-radius:24px!important;
+  overflow:auto!important;
+}
+body.resolution-forced .login-screen.hidden{display:none!important}
