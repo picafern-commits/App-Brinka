@@ -239,7 +239,6 @@
                 <div class="total-row"><span>Fecho anterior</span><strong id="sumExpected">0,00 €</strong></div>
                 <div class="total-row"><span>Valor inicial</span><strong id="sumInitial">0,00 €</strong></div>
                 <div class="total-row highlight"><span>Lucro</span><strong id="sumProfit">0,00 €</strong></div>
-                <div class="total-row"><span>Diferença</span><strong id="sumDiff">0,00 €</strong></div>
                 <button class="primary-btn full" id="saveClosure">Guardar fecho</button>
                 <button class="soft-btn full" id="clearForm">Limpar formulário</button>
               </article>
@@ -387,26 +386,14 @@
 
             <article class="panel screen-panel">
               <div class="panel-title">
-                <h3>Resolução deste dispositivo</h3>
+                <h3>Ecrã deste dispositivo</h3>
                 <span class="pill" id="screenProfileStatus">Automático</span>
               </div>
               <div class="screen-current">
                 <div><span>Ecrã detetado</span><strong id="screenDetected">—</strong></div>
                 <div><span>Ajuste ativo</span><strong id="screenActiveProfile">Automático</strong></div>
               </div>
-              <label class="wide-label">
-                <span>Escolher resolução</span>
-                <select id="screenProfile"></select>
-              </label>
-              <div class="form-grid screen-custom-grid" id="screenCustomFields">
-                <label><span>Largura</span><input id="customScreenWidth" type="number" min="320" max="7680" step="1" placeholder="1920" /></label>
-                <label><span>Altura</span><input id="customScreenHeight" type="number" min="480" max="4320" step="1" placeholder="1080" /></label>
-              </div>
-              <p class="muted">Esta escolha fica guardada apenas neste dispositivo.</p>
-              <div class="inline-actions note-actions">
-                <button class="primary-btn" id="saveScreenProfile" type="button">Aplicar resolução</button>
-                <button class="soft-btn" id="resetScreenProfile" type="button">Automático</button>
-              </div>
+              <p class="muted">A app ajusta-se automaticamente ao tamanho real do monitor, tablet ou telemóvel.</p>
             </article>
 
             <article class="panel backup-panel">
