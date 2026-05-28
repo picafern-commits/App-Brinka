@@ -97,6 +97,7 @@
 
         <div class="top-actions">
           <div class="user-badge" id="userBadge">—</div>
+          <div class="screen-badge" id="screenType">Desktop</div>
           <button class="soft-btn" id="themeBtn">Tema</button>
           <button class="soft-btn" id="logoutBtn">Sair</button>
           <button class="primary-btn" data-page="fecho">+ Novo fecho</button>
@@ -346,6 +347,30 @@
                 <input id="customAccent" type="color" value="#c2188c" />
               </label>
               <button class="soft-btn full" id="applyCustomTheme" type="button">Aplicar cor personalizada</button>
+            </article>
+
+            <article class="panel screen-panel">
+              <div class="panel-title">
+                <h3>Resolução deste dispositivo</h3>
+                <span class="pill" id="screenProfileStatus">Automático</span>
+              </div>
+              <div class="screen-current">
+                <div><span>Ecrã detetado</span><strong id="screenDetected">—</strong></div>
+                <div><span>Ajuste ativo</span><strong id="screenActiveProfile">Automático</strong></div>
+              </div>
+              <label class="wide-label">
+                <span>Escolher resolução</span>
+                <select id="screenProfile"></select>
+              </label>
+              <div class="form-grid screen-custom-grid" id="screenCustomFields">
+                <label><span>Largura</span><input id="customScreenWidth" type="number" min="320" max="7680" step="1" placeholder="1920" /></label>
+                <label><span>Altura</span><input id="customScreenHeight" type="number" min="480" max="4320" step="1" placeholder="1080" /></label>
+              </div>
+              <p class="muted">Esta escolha fica guardada apenas neste dispositivo.</p>
+              <div class="inline-actions note-actions">
+                <button class="primary-btn" id="saveScreenProfile" type="button">Aplicar resolução</button>
+                <button class="soft-btn" id="resetScreenProfile" type="button">Automático</button>
+              </div>
             </article>
 
             <article class="panel backup-panel">
