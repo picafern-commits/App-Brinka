@@ -546,20 +546,17 @@
 
       <input id="pedidoId" type="hidden" />
 
-      <div class="pedido-tabs">
-        <button class="pedido-tab active" type="button" data-pedido-tab="cliente">Dados Cliente</button>
-        <button class="pedido-tab" type="button" data-pedido-tab="produto">Dados Produto</button>
+      <div class="form-grid pedido-form-grid">
+        <label><span>Nome Cliente</span><input id="pedidoClienteNome" type="text" placeholder="Nome do cliente" /></label>
+        <label><span>Número telemóvel (opcional)</span><input id="pedidoTelemovel" type="tel" placeholder="9xxxxxxxx" /></label>
+        <label><span>Nome produto</span><input id="pedidoProdutoNome" type="text" placeholder="Nome do produto" /></label>
+        <label><span>Referência Produto (opcional)</span><input id="pedidoReferencia" type="text" placeholder="Referência" /></label>
       </div>
 
-      <div class="pedido-tab-panel active" id="pedidoTabCliente">
-        <label class="wide-label"><span>Nome Cliente</span><input id="pedidoClienteNome" type="text" placeholder="Nome do cliente" /></label>
-        <label class="wide-label"><span>Número telemóvel (opcional)</span><input id="pedidoTelemovel" type="tel" placeholder="9xxxxxxxx" /></label>
-      </div>
-
-      <div class="pedido-tab-panel" id="pedidoTabProduto">
-        <label class="wide-label"><span>Nome produto</span><input id="pedidoProdutoNome" type="text" placeholder="Nome do produto" /></label>
-        <label class="wide-label"><span>Referência Produto (opcional)</span><input id="pedidoReferencia" type="text" placeholder="Referência" /></label>
-      </div>
+      <label class="wide-label">
+        <span>Observações do pedido</span>
+        <textarea id="pedidoObservacoes" rows="4" placeholder="Notas, tamanho, cor, aviso ao cliente..."></textarea>
+      </label>
 
       <div class="edit-actions">
         <button class="soft-btn" id="cancelPedidoModal" type="button">Cancelar</button>
