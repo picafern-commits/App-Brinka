@@ -69,9 +69,11 @@
       <nav class="nav-list">
         <button class="nav-item active" data-page="dashboard"><span>📊</span><b>Dashboard</b></button>
         <button class="nav-item" data-page="fecho"><span>💶</span><b>Fecho de Caixa</b></button>
+        <button class="nav-item" data-page="pedidos"><span>🛍️</span><b>Pedidos</b></button>
         <button class="nav-item" data-page="apontamentos"><span>✎</span><b>Apontamentos</b></button>
         <button class="nav-item" data-page="historico"><span>🧾</span><b>Histórico</b></button>
         <button class="nav-item" data-page="relatorios"><span>📈</span><b>Relatórios</b></button>
+        <button class="nav-item" data-page="user-config"><span>🎨</span><b>Definições</b></button>
         <button class="nav-item admin-only" data-page="config"><span>⚙️</span><b>Configurações</b></button>
         <button class="nav-item admin-only" data-page="users"><span>👥</span><b>Utilizadores</b></button>
       </nav>
@@ -97,6 +99,7 @@
 
         <div class="top-actions">
           <div class="user-badge" id="userBadge">—</div>
+          <div class="screen-badge" id="screenType">Desktop</div>
           <button class="soft-btn" id="themeBtn">Tema</button>
           <button class="soft-btn" id="logoutBtn">Sair</button>
           <button class="primary-btn" data-page="fecho">+ Novo fecho</button>
@@ -271,6 +274,16 @@
           </article>
         </section>
 
+        <section class="page" id="page-pedidos">
+          <article class="panel">
+            <div class="panel-title">
+              <h3>Pedidos</h3>
+              <button class="primary-btn" id="openPedidoModal" type="button">Adicionar pedido</button>
+            </div>
+            <div id="pedidosList" class="cards-list"></div>
+          </article>
+        </section>
+
         <section class="page" id="page-apontamentos">
           <div class="notes-layout">
             <article class="panel note-editor">
@@ -301,6 +314,30 @@
                 <button class="soft-btn" id="exportNotes" type="button">Exportar</button>
               </div>
               <div id="notesList" class="cards-list"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="page-user-config">
+          <div class="panel-grid">
+            <article class="panel theme-lab">
+              <div class="panel-title">
+                <h3>Cores da app</h3>
+                <span class="pill" id="userThemeName">Brinka</span>
+              </div>
+              <div class="theme-preview">
+                <div class="theme-sample"></div>
+                <div>
+                  <strong>Visual ativo</strong>
+                  <span>Esta preferência fica guardada neste dispositivo.</span>
+                </div>
+              </div>
+              <div class="palette-grid" id="userPaletteGrid"></div>
+              <label class="wide-label color-field">
+                <span>Cor personalizada</span>
+                <input id="userCustomAccent" type="color" value="#c2188c" />
+              </label>
+              <button class="soft-btn full" id="userApplyCustomTheme" type="button">Aplicar cor personalizada</button>
             </article>
           </div>
         </section>
@@ -346,6 +383,30 @@
                 <input id="customAccent" type="color" value="#c2188c" />
               </label>
               <button class="soft-btn full" id="applyCustomTheme" type="button">Aplicar cor personalizada</button>
+            </article>
+
+            <article class="panel screen-panel">
+              <div class="panel-title">
+                <h3>Resolução deste dispositivo</h3>
+                <span class="pill" id="screenProfileStatus">Automático</span>
+              </div>
+              <div class="screen-current">
+                <div><span>Ecrã detetado</span><strong id="screenDetected">—</strong></div>
+                <div><span>Ajuste ativo</span><strong id="screenActiveProfile">Automático</strong></div>
+              </div>
+              <label class="wide-label">
+                <span>Escolher resolução</span>
+                <select id="screenProfile"></select>
+              </label>
+              <div class="form-grid screen-custom-grid" id="screenCustomFields">
+                <label><span>Largura</span><input id="customScreenWidth" type="number" min="320" max="7680" step="1" placeholder="1920" /></label>
+                <label><span>Altura</span><input id="customScreenHeight" type="number" min="480" max="4320" step="1" placeholder="1080" /></label>
+              </div>
+              <p class="muted">Esta escolha fica guardada apenas neste dispositivo.</p>
+              <div class="inline-actions note-actions">
+                <button class="primary-btn" id="saveScreenProfile" type="button">Aplicar resolução</button>
+                <button class="soft-btn" id="resetScreenProfile" type="button">Automático</button>
+              </div>
             </article>
 
             <article class="panel backup-panel">
@@ -485,6 +546,40 @@
 
   <div class="overlay" id="overlay"></div>
   <div class="toast" id="toast"></div>
+
+  <section class="edit-modal hidden" id="pedidoModal" aria-hidden="true">
+    <div class="edit-card pedido-modal-card">
+      <div class="edit-head">
+        <div>
+          <p class="eyebrow">Pedidos</p>
+          <h3 id="pedidoModalTitle">Adicionar pedido</h3>
+        </div>
+        <button class="edit-close" id="closePedidoModal" type="button">×</button>
+      </div>
+
+      <input id="pedidoId" type="hidden" />
+
+      <div class="pedido-tabs">
+        <button class="pedido-tab active" type="button" data-pedido-tab="cliente">Dados Cliente</button>
+        <button class="pedido-tab" type="button" data-pedido-tab="produto">Dados Produto</button>
+      </div>
+
+      <div class="pedido-tab-panel active" id="pedidoTabCliente">
+        <label class="wide-label"><span>Nome Cliente</span><input id="pedidoClienteNome" type="text" placeholder="Nome do cliente" /></label>
+        <label class="wide-label"><span>Número telemóvel (opcional)</span><input id="pedidoTelemovel" type="tel" placeholder="9xxxxxxxx" /></label>
+      </div>
+
+      <div class="pedido-tab-panel" id="pedidoTabProduto">
+        <label class="wide-label"><span>Nome produto</span><input id="pedidoProdutoNome" type="text" placeholder="Nome do produto" /></label>
+        <label class="wide-label"><span>Referência Produto (opcional)</span><input id="pedidoReferencia" type="text" placeholder="Referência" /></label>
+      </div>
+
+      <div class="edit-actions">
+        <button class="soft-btn" id="cancelPedidoModal" type="button">Cancelar</button>
+        <button class="primary-btn" id="savePedido" type="button">Guardar registo de pedido</button>
+      </div>
+    </div>
+  </section>
 
   <script src="./firebase-config.js?v=scrollfix-final"></script>
   <script type="module" src="./app.js?v=apontamentos-cores-backup"></script>
