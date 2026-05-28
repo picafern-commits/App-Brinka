@@ -200,6 +200,8 @@ button,
 }
 
 
+
+
 /* Gestão de Utilizadores */
 .admin-only.hidden-admin {
   display: none !important;
@@ -1335,3 +1337,126 @@ body {
 table{min-width:720px}.action-buttons{white-space:nowrap}
 @media(max-width:1180px){.notes-layout{grid-template-columns:1fr}.palette-grid,.backup-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:850px){.palette-grid,.backup-grid{grid-template-columns:1fr}.note-editor textarea{min-height:260px}}
+
+/* Glow sincronizado com a cor ativa da app */
+button,
+.nav-item,
+.primary-btn,
+.soft-btn,
+.danger-btn,
+.mini-btn,
+.delete-row,
+.action-edit,
+.action-delete,
+.palette-btn,
+.screen-badge,
+.user-badge {
+  --active-glow-soft: color-mix(in srgb, var(--pink) 24%, transparent);
+  --active-glow-strong: color-mix(in srgb, var(--pink) 38%, transparent);
+}
+
+.primary-btn,
+.soft-btn,
+.danger-btn,
+.mini-btn,
+.delete-row,
+.action-edit,
+.action-delete {
+  box-shadow:0 12px 28px var(--active-glow-soft)!important;
+}
+
+.primary-btn:hover,
+.soft-btn:hover,
+.danger-btn:hover,
+.mini-btn:hover,
+.delete-row:hover,
+.action-edit:hover,
+.action-delete:hover,
+.palette-btn:hover {
+  box-shadow:0 16px 34px var(--active-glow-strong)!important;
+}
+
+.nav-item.active,
+.nav-item:hover {
+  box-shadow:0 18px 38px var(--active-glow-strong)!important;
+}
+
+.action-edit,
+.action-delete {
+  background:linear-gradient(135deg,var(--pink),var(--pink2))!important;
+}
+
+.palette-btn.active,
+input:focus,
+textarea:focus,
+select:focus {
+  border-color:color-mix(in srgb, var(--pink) 70%, white 8%)!important;
+  box-shadow:0 0 0 4px var(--active-glow-soft)!important;
+}
+
+.pill,
+.total-row.highlight,
+.profit-box.main {
+  border-color:color-mix(in srgb, var(--pink) 34%, transparent)!important;
+  background:color-mix(in srgb, var(--pink) 14%, transparent)!important;
+}
+
+body.resolution-forced{
+  min-height:100vh!important;
+  display:grid!important;
+  place-items:start center!important;
+  padding:18px!important;
+  overflow:auto!important;
+}
+
+body.resolution-forced .app-bg{
+  position:fixed!important;
+}
+
+body.resolution-forced .app-layout{
+  width:min(var(--app-device-width),100%)!important;
+  height:var(--app-device-height)!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+  border:1px solid var(--line)!important;
+  border-radius:24px!important;
+  box-shadow:0 28px 80px color-mix(in srgb, var(--pink) 24%, transparent)!important;
+  background:linear-gradient(135deg,var(--bg),var(--bg2))!important;
+}
+
+body.resolution-forced .sidebar{
+  height:var(--app-device-height)!important;
+  max-height:var(--app-device-height)!important;
+}
+
+body.resolution-forced .main-area{
+  height:var(--app-device-height)!important;
+  min-height:0!important;
+  overflow:auto!important;
+}
+
+body.resolution-forced .login-screen{
+  position:fixed!important;
+  inset:18px!important;
+  width:min(var(--app-device-width),calc(100vw - 36px))!important;
+  height:min(var(--app-device-height),calc(100vh - 36px))!important;
+  margin:auto!important;
+  border-radius:24px!important;
+  border:1px solid var(--line)!important;
+  overflow:auto!important;
+}
+
+body.resolution-forced.screen-mobile .app-layout,
+body.resolution-forced.screen-tablet .app-layout{
+  grid-template-columns:1fr!important;
+}
+
+@media (min-width: 1180px){
+  .hero-grid{
+    grid-template-columns:2.2fr 1fr 1fr 1fr!important;
+  }
+
+  .panel-grid{
+    grid-template-columns:minmax(0,1.25fr) minmax(320px,.75fr)!important;
+  }
