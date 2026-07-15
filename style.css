@@ -1917,3 +1917,885 @@ body.screen-mobile.resolution-forced .app-layout{
   border:0!important;
   border-radius:0!important;
 }
+
+/* =========================================================
+   BRINKA NOVO VISUAL 2026 — NAVEGAÇÃO SUPERIOR, SEM SIDEBAR
+   ========================================================= */
+:root{
+  --nav-h:88px;
+  --content-cap:1680px;
+  --radius:22px;
+  --shadow:0 18px 55px rgba(0,0,0,.24);
+}
+
+html,body{
+  width:100%;
+  max-width:100%;
+}
+
+body{
+  background:#090d17;
+}
+
+.app-bg{
+  background:
+    radial-gradient(circle at 8% 0%,color-mix(in srgb,var(--pink) 24%,transparent),transparent 32rem),
+    radial-gradient(circle at 95% 10%,color-mix(in srgb,var(--orange) 14%,transparent),transparent 28rem),
+    linear-gradient(145deg,#090d17,#101525 58%,#0b101c)!important;
+}
+
+/* A antiga sidebar passa a ser uma barra de navegação superior. */
+.app-layout,
+body:not(.resolution-forced) .app-layout,
+body.resolution-forced .app-layout{
+  display:block!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-height:100vh!important;
+  margin:0!important;
+  overflow:visible!important;
+  transform:none!important;
+  left:auto!important;
+  top:auto!important;
+}
+
+.sidebar,
+body.resolution-forced .sidebar,
+body.screen-desktop .sidebar,
+body.screen-tablet .sidebar,
+body.screen-mobile .sidebar{
+  position:sticky!important;
+  inset:auto!important;
+  top:0!important;
+  z-index:80!important;
+  width:100%!important;
+  max-width:100%!important;
+  height:auto!important;
+  min-height:var(--nav-h)!important;
+  padding:12px clamp(14px,2vw,30px)!important;
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:18px!important;
+  transform:none!important;
+  border:0!important;
+  border-bottom:1px solid rgba(255,255,255,.09)!important;
+  background:rgba(8,12,22,.86)!important;
+  backdrop-filter:blur(24px) saturate(135%)!important;
+  box-shadow:0 12px 40px rgba(0,0,0,.18)!important;
+}
+
+body.light .sidebar{
+  background:rgba(250,248,253,.88)!important;
+  border-bottom-color:rgba(40,3,52,.10)!important;
+}
+
+.brand-card{
+  margin:0!important;
+  padding:7px 10px!important;
+  min-width:184px!important;
+  border-radius:18px!important;
+  box-shadow:none!important;
+  background:rgba(255,255,255,.055)!important;
+}
+.brand-logo{width:45px!important;height:45px!important;border-radius:14px!important}
+.brand-name{font-size:22px!important}
+.brand-sub{font-size:11px!important}
+
+.nav-list{
+  min-width:0!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  overflow-x:auto!important;
+  overflow-y:hidden!important;
+  scrollbar-width:none!important;
+  padding:3px!important;
+}
+.nav-list::-webkit-scrollbar{display:none!important}
+
+.nav-item{
+  flex:0 0 auto!important;
+  width:auto!important;
+  min-width:auto!important;
+  min-height:48px!important;
+  padding:0 13px!important;
+  border-radius:15px!important;
+  justify-content:center!important;
+  color:#aeb6c8!important;
+  white-space:nowrap!important;
+}
+.nav-item span{
+  width:29px!important;
+  height:29px!important;
+  border-radius:10px!important;
+  font-size:15px!important;
+}
+.nav-item b{font-size:13px!important}
+.nav-item.active,
+.nav-item:hover{
+  color:#fff!important;
+  background:linear-gradient(135deg,#ed2d86,#ff7047)!important;
+  box-shadow:0 10px 26px rgba(237,45,134,.22)!important;
+  transform:none!important;
+}
+
+.side-status{
+  margin:0!important;
+  padding:10px 12px!important;
+  min-width:185px!important;
+  border-radius:16px!important;
+  background:rgba(255,255,255,.045)!important;
+}
+.side-status strong{font-size:12px!important}
+.side-status small{font-size:10px!important;max-width:145px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.main-area,
+body:not(.resolution-forced) .main-area,
+body.resolution-forced .main-area{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  padding:22px clamp(16px,2.2vw,38px) 48px!important;
+  margin:0!important;
+  overflow-x:hidden!important;
+}
+
+.topbar{
+  width:min(100%,var(--content-cap))!important;
+  max-width:100%!important;
+  margin:0 auto 22px!important;
+  padding:4px 2px!important;
+  align-items:center!important;
+}
+.menu-btn{display:none!important}
+.top-actions{flex-wrap:wrap!important;justify-content:flex-end!important}
+.user-badge,.screen-badge,.soft-btn,.primary-btn{border-radius:14px!important}
+
+.content,
+body:not(.resolution-forced) .content,
+body.resolution-forced .content{
+  width:min(100%,var(--content-cap))!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0 auto!important;
+  overflow:visible!important;
+}
+
+/* Visual de cartões mais limpo e profissional. */
+.hero-card,.metric-card,.panel,.total-card,.intel-card,.profit-box{
+  border-radius:var(--radius)!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  background:linear-gradient(145deg,rgba(27,34,49,.94),rgba(15,21,34,.94))!important;
+  box-shadow:var(--shadow)!important;
+}
+body.light .hero-card,body.light .metric-card,body.light .panel,body.light .total-card{
+  background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(245,241,249,.94))!important;
+}
+
+.hero-card{min-height:165px!important;padding:24px!important}
+.metric-card{min-height:165px!important;padding:20px!important}
+.panel{padding:20px!important}
+
+.hero-grid,
+.hero-grid.small,
+.panel-grid,
+.checkout-grid,
+.money-grid,
+.form-grid,
+.filters,
+.intel-grid,
+.profit-grid,
+.multi-store-grid{
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+}
+
+.hero-grid{grid-template-columns:minmax(0,1.65fr) repeat(3,minmax(170px,.75fr))!important}
+.panel-grid{grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr)!important}
+.checkout-grid{grid-template-columns:minmax(0,1fr) clamp(310px,28vw,390px)!important}
+.form-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.money-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+
+.page,.panel,.hero-card,.metric-card,.checkout-main,.total-panel,.total-card,
+.form-grid>*,.money-grid>*,.panel-grid>*,.hero-grid>*{
+  min-width:0!important;
+  max-width:100%!important;
+}
+
+input,select,textarea,button{max-width:100%!important}
+.table-wrap{max-width:100%!important}
+
+/* Resoluções menores: reorganiza, nunca empurra para fora da app. */
+@media(max-width:1450px){
+  .sidebar{grid-template-columns:auto minmax(0,1fr)!important}
+  .side-status{display:none!important}
+  .nav-item{padding:0 10px!important}
+  .nav-item b{font-size:12px!important}
+  .hero-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+
+@media(max-width:1100px){
+  :root{--nav-h:76px}
+  .brand-card{min-width:auto!important}
+  .brand-card>div{display:none!important}
+  .sidebar{grid-template-columns:auto minmax(0,1fr)!important;padding:10px 14px!important}
+  .nav-list{justify-content:flex-start!important}
+  .panel-grid,.checkout-grid{grid-template-columns:1fr!important}
+  .total-panel{position:static!important}
+  .form-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .top-actions .user-badge,.top-actions .screen-badge{display:none!important}
+}
+
+/* Em telemóvel/tablet a navegação vira uma barra inferior, não uma sidebar. */
+@media(max-width:760px){
+  body{padding-bottom:calc(78px + env(safe-area-inset-bottom))!important}
+  .sidebar,
+  body.screen-mobile .sidebar,
+  body.screen-tablet .sidebar{
+    position:fixed!important;
+    top:auto!important;
+    left:0!important;
+    right:0!important;
+    bottom:0!important;
+    min-height:0!important;
+    height:calc(70px + env(safe-area-inset-bottom))!important;
+    padding:7px 8px calc(7px + env(safe-area-inset-bottom))!important;
+    display:block!important;
+    transform:none!important;
+    border-top:1px solid rgba(255,255,255,.10)!important;
+    border-bottom:0!important;
+  }
+  .brand-card,.side-status{display:none!important}
+  .nav-list{height:56px!important;justify-content:flex-start!important;gap:4px!important}
+  .nav-item{min-width:70px!important;height:54px!important;min-height:54px!important;padding:5px 8px!important;display:flex!important;flex-direction:column!important;gap:2px!important;border-radius:13px!important}
+  .nav-item span{background:transparent!important;height:25px!important}
+  .nav-item b{font-size:9px!important;max-width:72px;overflow:hidden;text-overflow:ellipsis}
+  .main-area,body.screen-mobile .main-area,body.screen-tablet .main-area{padding:16px 12px 24px!important}
+  .topbar{margin-bottom:16px!important}
+  .top-actions{display:flex!important}
+  .top-actions>*{display:none!important}
+  .top-actions .primary-btn[data-page="fecho"]{display:inline-flex!important;min-height:42px!important;padding:0 12px!important}
+  h1{font-size:30px!important}
+  h2{font-size:36px!important}
+  .hero-grid,.hero-grid.small,.panel-grid,.checkout-grid,.money-grid,.form-grid,.filters,
+  body.screen-tablet .money-grid{grid-template-columns:1fr!important}
+  .hero-card,.metric-card{min-height:auto!important}
+  .panel{padding:15px!important}
+  .money-row{grid-template-columns:65px minmax(0,1fr) 90px!important}
+  table{min-width:680px!important}
+}
+
+/* =========================================================
+   BRINKA COLOR SYSTEM 2026 — LIGADO À PERSONALIZAÇÃO
+   Todas as áreas visuais usam as variáveis alteradas pelo seletor
+   de paleta/cor personalizada da própria aplicação.
+   ========================================================= */
+:root{
+  --text:#f8fbff;
+  --line:color-mix(in srgb,var(--pink) 15%,rgba(255,255,255,.12));
+  --green:#37d883;
+  --red:#ff4f72;
+  --shadow:0 20px 55px rgba(0,5,22,.30);
+
+  /* Tons derivados automaticamente da cor/paleta escolhida */
+  --accent-main:var(--pink);
+  --accent-deep:var(--pink2);
+  --accent-warm:var(--orange);
+  --accent-soft:var(--orange2);
+  --accent-cool:color-mix(in srgb,var(--pink2) 58%,#268cff);
+  --accent-violet:color-mix(in srgb,var(--pink) 54%,#7c4dff);
+  --surface-1:color-mix(in srgb,var(--bg2) 84%,var(--pink) 16%);
+  --surface-2:color-mix(in srgb,var(--bg2) 90%,var(--pink2) 10%);
+  --surface-3:color-mix(in srgb,var(--bg) 78%,var(--pink) 22%);
+}
+
+body{
+  background:linear-gradient(145deg,var(--bg),var(--bg2) 58%,color-mix(in srgb,var(--bg) 82%,var(--pink2) 18%))!important;
+}
+
+.app-bg{
+  background:
+    radial-gradient(circle at 8% 2%,color-mix(in srgb,var(--pink) 31%,transparent),transparent 34rem),
+    radial-gradient(circle at 92% 8%,color-mix(in srgb,var(--accent-cool) 25%,transparent),transparent 30rem),
+    radial-gradient(circle at 52% 90%,color-mix(in srgb,var(--pink2) 24%,transparent),transparent 36rem),
+    linear-gradient(145deg,var(--bg),var(--bg2) 56%,color-mix(in srgb,var(--bg) 80%,var(--pink2) 20%))!important;
+}
+
+.sidebar,
+body.light .sidebar{
+  background:color-mix(in srgb,var(--bg) 89%,transparent)!important;
+  border-bottom-color:color-mix(in srgb,var(--pink) 18%,transparent)!important;
+}
+
+.brand-card{
+  background:linear-gradient(145deg,color-mix(in srgb,var(--bg2) 72%,var(--pink) 28%),color-mix(in srgb,var(--bg) 86%,var(--pink2) 14%))!important;
+  border-color:color-mix(in srgb,var(--pink) 23%,transparent)!important;
+}
+
+.nav-item{
+  color:color-mix(in srgb,var(--muted) 88%,white 12%)!important;
+  background:color-mix(in srgb,var(--bg2) 94%,white 6%)!important;
+}
+.nav-item:hover{
+  color:#fff!important;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--pink) 76%,transparent),color-mix(in srgb,var(--orange) 76%,transparent))!important;
+}
+.nav-item.active{
+  color:#fff!important;
+  background:linear-gradient(135deg,var(--pink) 0%,color-mix(in srgb,var(--pink) 52%,var(--orange) 48%) 55%,var(--orange) 100%)!important;
+  box-shadow:0 12px 30px color-mix(in srgb,var(--pink) 30%,transparent)!important;
+}
+
+.eyebrow{
+  color:color-mix(in srgb,var(--pink) 72%,white 28%)!important;
+}
+
+.hero-card,
+.metric-card,
+.panel,
+.total-card,
+.intel-card,
+.profit-box{
+  border-color:color-mix(in srgb,var(--pink) 17%,rgba(255,255,255,.06))!important;
+  background:linear-gradient(145deg,var(--surface-1),var(--surface-2))!important;
+  box-shadow:0 18px 48px rgba(0,5,25,.28)!important;
+}
+
+/* Dashboard: os quatro cartões acompanham sempre a paleta selecionada */
+#page-dashboard .hero-grid > :nth-child(1){
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--pink) 64%,var(--bg2)),
+    color-mix(in srgb,var(--pink2) 54%,var(--bg2)) 58%,
+    color-mix(in srgb,var(--bg2) 90%,var(--pink) 10%))!important;
+  border-color:color-mix(in srgb,var(--pink) 42%,transparent)!important;
+}
+#page-dashboard .hero-grid > :nth-child(2){
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--accent-cool) 62%,var(--bg2)),
+    color-mix(in srgb,var(--bg2) 86%,var(--accent-cool) 14%))!important;
+  border-color:color-mix(in srgb,var(--accent-cool) 40%,transparent)!important;
+}
+#page-dashboard .hero-grid > :nth-child(3){
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--accent-violet) 64%,var(--bg2)),
+    color-mix(in srgb,var(--bg2) 84%,var(--accent-violet) 16%))!important;
+  border-color:color-mix(in srgb,var(--accent-violet) 40%,transparent)!important;
+}
+#page-dashboard .hero-grid > :nth-child(4){
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--orange) 52%,var(--pink2) 20%,var(--bg2)),
+    color-mix(in srgb,var(--bg2) 84%,var(--orange) 16%))!important;
+  border-color:color-mix(in srgb,var(--orange) 38%,transparent)!important;
+}
+
+#page-dashboard .hero-card::after,
+#page-dashboard .metric-card::after{
+  content:"";
+  position:absolute;
+  right:-24px;
+  bottom:-30px;
+  width:180px;
+  height:110px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.11),transparent 68%);
+  pointer-events:none;
+}
+#page-dashboard .metric-card{position:relative;overflow:hidden}
+
+.list-item,
+.summary-boxes div,
+.total-row,
+.money-row,
+.user-card,
+.table-wrap,
+.screen-current div{
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--bg2) 78%,var(--pink) 22%),
+    color-mix(in srgb,var(--bg2) 91%,var(--pink2) 9%))!important;
+  border-color:color-mix(in srgb,var(--pink) 17%,rgba(255,255,255,.05))!important;
+}
+
+.list-item:hover,
+.summary-boxes div:hover,
+.user-card:hover{
+  border-color:color-mix(in srgb,var(--pink) 38%,transparent)!important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--bg2) 68%,var(--pink) 32%),
+    color-mix(in srgb,var(--bg2) 84%,var(--pink2) 16%))!important;
+}
+
+.primary-btn{
+  color:#fff!important;
+  background:linear-gradient(135deg,var(--pink) 0%,color-mix(in srgb,var(--pink) 50%,var(--orange) 50%) 55%,var(--orange) 100%)!important;
+  box-shadow:0 12px 26px color-mix(in srgb,var(--pink) 25%,transparent)!important;
+}
+.primary-btn:hover{filter:brightness(1.08)!important;transform:translateY(-1px)}
+
+.soft-btn,
+.user-badge,
+.screen-badge{
+  color:var(--text)!important;
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--bg2) 80%,var(--pink) 20%),
+    color-mix(in srgb,var(--bg) 90%,var(--pink2) 10%))!important;
+  border-color:color-mix(in srgb,var(--pink) 24%,transparent)!important;
+}
+.text-btn{color:color-mix(in srgb,var(--pink) 72%,white 28%)!important}
+
+input,
+textarea,
+select{
+  background:color-mix(in srgb,var(--bg2) 76%,var(--pink) 24%)!important;
+  border-color:color-mix(in srgb,var(--pink) 24%,transparent)!important;
+  color:var(--text)!important;
+}
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:color-mix(in srgb,var(--pink) 72%,transparent)!important;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--pink) 15%,transparent)!important;
+}
+
+.pill{
+  background:color-mix(in srgb,var(--orange) 16%,transparent)!important;
+  color:color-mix(in srgb,var(--orange2) 76%,white 24%)!important;
+  border:1px solid color-mix(in srgb,var(--orange) 22%,transparent)!important;
+}
+
+.status-dot{
+  background:var(--green)!important;
+  box-shadow:0 0 0 6px color-mix(in srgb,var(--green) 14%,transparent),0 0 18px color-mix(in srgb,var(--green) 45%,transparent)!important;
+}
+
+.positive,.success,.online{color:#4fe392!important}
+.negative,.danger,.error{color:#ff5878!important}
+.warning{color:color-mix(in srgb,var(--orange2) 76%,white 24%)!important}
+.info{color:color-mix(in srgb,var(--accent-cool) 74%,white 26%)!important}
+
+#page-users .panel:first-child{
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--bg2) 76%,var(--pink) 24%),
+    color-mix(in srgb,var(--bg) 88%,var(--pink2) 12%))!important;
+}
+#page-users .panel:last-child{
+  background:linear-gradient(145deg,
+    color-mix(in srgb,var(--bg2) 80%,var(--accent-cool) 20%),
+    color-mix(in srgb,var(--bg) 90%,var(--pink2) 10%))!important;
+}
+
+/* Pré-visualização das definições também reflete a escolha atual */
+.theme-preview,
+.theme-sample{
+  background:linear-gradient(135deg,var(--pink),var(--orange))!important;
+}
+.palette-btn.active{
+  border-color:var(--pink)!important;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 18%,transparent)!important;
+}
+
+@media(max-width:760px){
+  .sidebar,
+  body.screen-mobile .sidebar,
+  body.screen-tablet .sidebar{
+    background:color-mix(in srgb,var(--bg) 94%,transparent)!important;
+  }
+}
+
+
+/* =========================================================
+   BRINKA COLOR BALANCE 2026
+   A personalização passa a atuar como acento visual, sem pintar
+   fundos, cartões e formulários por inteiro.
+   ========================================================= */
+:root{
+  --neutral-bg:#07101f;
+  --neutral-bg2:#0b1730;
+  --neutral-panel:#101d33;
+  --neutral-panel2:#152641;
+  --neutral-soft:#1a2d49;
+  --neutral-input:#1b2a43;
+  --neutral-line:rgba(255,255,255,.10);
+  --accent-glow:color-mix(in srgb,var(--pink) 18%,transparent);
+  --accent-line:color-mix(in srgb,var(--pink) 34%,transparent);
+}
+
+html,body{
+  background:var(--neutral-bg)!important;
+}
+
+body,
+.app-bg{
+  background:
+    radial-gradient(circle at 10% 0%,var(--accent-glow),transparent 34rem),
+    radial-gradient(circle at 92% 8%,color-mix(in srgb,var(--pink2) 12%,transparent),transparent 30rem),
+    linear-gradient(145deg,var(--neutral-bg),var(--neutral-bg2))!important;
+}
+
+.sidebar,
+body.light .sidebar{
+  background:rgba(6,14,29,.96)!important;
+  border-bottom-color:var(--neutral-line)!important;
+}
+
+.brand-card{
+  background:linear-gradient(145deg,#13213a,#0d182b)!important;
+  border-color:var(--accent-line)!important;
+}
+
+.nav-item{
+  color:var(--muted)!important;
+  background:rgba(255,255,255,.045)!important;
+  border-color:transparent!important;
+}
+.nav-item:hover{
+  color:#fff!important;
+  background:color-mix(in srgb,var(--pink) 16%,rgba(255,255,255,.055))!important;
+}
+.nav-item.active{
+  color:#fff!important;
+  background:linear-gradient(135deg,var(--pink),color-mix(in srgb,var(--pink) 55%,var(--orange) 45%),var(--orange))!important;
+  box-shadow:0 10px 25px color-mix(in srgb,var(--pink) 20%,transparent)!important;
+}
+
+.hero-card,
+.metric-card,
+.panel,
+.total-card,
+.intel-card,
+.profit-box,
+#page-users .panel:first-child,
+#page-users .panel:last-child{
+  background:linear-gradient(145deg,var(--neutral-panel2),var(--neutral-panel))!important;
+  border-color:var(--neutral-line)!important;
+  box-shadow:0 16px 42px rgba(0,5,22,.24)!important;
+}
+
+/* Só os cartões principais do dashboard recebem uma iluminação suave. */
+#page-dashboard .hero-grid > :nth-child(1){
+  background:linear-gradient(125deg,color-mix(in srgb,var(--pink) 25%,var(--neutral-panel2)),var(--neutral-panel))!important;
+  border-color:color-mix(in srgb,var(--pink) 28%,var(--neutral-line))!important;
+}
+#page-dashboard .hero-grid > :nth-child(2){
+  background:linear-gradient(125deg,color-mix(in srgb,#248cff 20%,var(--neutral-panel2)),var(--neutral-panel))!important;
+  border-color:color-mix(in srgb,#248cff 25%,var(--neutral-line))!important;
+}
+#page-dashboard .hero-grid > :nth-child(3){
+  background:linear-gradient(125deg,color-mix(in srgb,#8b5cf6 22%,var(--neutral-panel2)),var(--neutral-panel))!important;
+  border-color:color-mix(in srgb,#8b5cf6 25%,var(--neutral-line))!important;
+}
+#page-dashboard .hero-grid > :nth-child(4){
+  background:linear-gradient(125deg,color-mix(in srgb,var(--orange) 20%,var(--neutral-panel2)),var(--neutral-panel))!important;
+  border-color:color-mix(in srgb,var(--orange) 24%,var(--neutral-line))!important;
+}
+
+.list-item,
+.summary-boxes div,
+.total-row,
+.money-row,
+.user-card,
+.table-wrap,
+.screen-current div{
+  background:rgba(255,255,255,.048)!important;
+  border-color:var(--neutral-line)!important;
+}
+.list-item:hover,
+.summary-boxes div:hover,
+.user-card:hover{
+  background:color-mix(in srgb,var(--pink) 8%,rgba(255,255,255,.06))!important;
+  border-color:var(--accent-line)!important;
+}
+
+.soft-btn,
+.user-badge,
+.screen-badge{
+  color:var(--text)!important;
+  background:rgba(255,255,255,.06)!important;
+  border-color:var(--neutral-line)!important;
+}
+.soft-btn:hover{
+  background:color-mix(in srgb,var(--pink) 10%,rgba(255,255,255,.07))!important;
+  border-color:var(--accent-line)!important;
+}
+
+input,
+textarea,
+select{
+  background:var(--neutral-input)!important;
+  border-color:var(--neutral-line)!important;
+  color:var(--text)!important;
+}
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:var(--pink)!important;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--pink) 13%,transparent)!important;
+}
+
+.pill{
+  background:color-mix(in srgb,var(--pink) 11%,rgba(255,255,255,.05))!important;
+  color:color-mix(in srgb,var(--pink) 55%,white 45%)!important;
+  border-color:color-mix(in srgb,var(--pink) 20%,transparent)!important;
+}
+
+.theme-preview{
+  background:rgba(255,255,255,.05)!important;
+  border-color:var(--neutral-line)!important;
+}
+.theme-sample{
+  background:linear-gradient(135deg,var(--pink),var(--orange))!important;
+}
+
+
+/* =========================================================
+   BRINKA VISUAL OPTIONS + MICROANIMATIONS 2026
+   ========================================================= */
+.theme-options{display:grid;grid-template-columns:minmax(150px,1.3fr) repeat(2,minmax(120px,1fr));gap:10px;margin-top:12px;align-items:end}
+.theme-options>label{display:grid;gap:7px;color:var(--muted);font-weight:900;font-size:12px}
+.theme-switch{min-height:46px;padding:0 13px;border-radius:15px;border:1px solid var(--neutral-line);background:rgba(255,255,255,.045);display:flex!important;align-items:center;gap:9px!important;cursor:pointer}
+.theme-switch input{width:18px!important;height:18px!important;accent-color:var(--pink)}
+.theme-options select{min-height:46px}
+
+/* Intensidade da cor */
+body[data-color-intensity="minimal"]{--accent-glow:color-mix(in srgb,var(--pink) 8%,transparent);--accent-line:color-mix(in srgb,var(--pink) 22%,transparent)}
+body[data-color-intensity="minimal"] #page-dashboard .hero-grid>*{background:linear-gradient(145deg,var(--neutral-panel2),var(--neutral-panel))!important;border-color:var(--neutral-line)!important}
+body[data-color-intensity="minimal"] .nav-item:hover{background:rgba(255,255,255,.07)!important}
+body[data-color-intensity="minimal"] .panel:hover,body[data-color-intensity="minimal"] .card:hover{box-shadow:0 14px 32px rgba(0,0,0,.20)!important}
+
+body[data-color-intensity="colorful"]{--accent-glow:color-mix(in srgb,var(--pink) 26%,transparent);--accent-line:color-mix(in srgb,var(--pink) 44%,transparent)}
+body[data-color-intensity="colorful"] #page-dashboard .hero-grid>:nth-child(1){background:linear-gradient(125deg,color-mix(in srgb,var(--pink) 38%,var(--neutral-panel2)),var(--neutral-panel))!important}
+body[data-color-intensity="colorful"] #page-dashboard .hero-grid>:nth-child(2){background:linear-gradient(125deg,color-mix(in srgb,#248cff 30%,var(--neutral-panel2)),var(--neutral-panel))!important}
+body[data-color-intensity="colorful"] #page-dashboard .hero-grid>:nth-child(3){background:linear-gradient(125deg,color-mix(in srgb,#8d4cff 32%,var(--neutral-panel2)),var(--neutral-panel))!important}
+body[data-color-intensity="colorful"] #page-dashboard .hero-grid>:nth-child(4){background:linear-gradient(125deg,color-mix(in srgb,var(--orange) 28%,var(--neutral-panel2)),var(--neutral-panel))!important}
+
+body.theme-no-gradients .primary-btn,body.theme-no-gradients .nav-item.active,body.theme-no-gradients .theme-sample{background:var(--pink)!important}
+body.theme-no-gradients #page-dashboard .hero-grid>*{background:var(--neutral-panel2)!important}
+body.theme-no-glow *,body.theme-no-glow *::before,body.theme-no-glow *::after{box-shadow:none!important;text-shadow:none!important}
+body.theme-no-glow .app-bg{background:linear-gradient(145deg,var(--neutral-bg),var(--neutral-bg2))!important}
+
+/* Microanimações discretas */
+.page.active.page-enter>.hero-grid,.page.active.page-enter>.panel-grid,.page.active.page-enter>.panel{animation:brinkaPageIn .34s cubic-bezier(.2,.75,.25,1) both}
+.page.active.page-enter .hero-grid>*{animation:brinkaCardIn .38s cubic-bezier(.2,.75,.25,1) both}
+.page.active.page-enter .hero-grid>*:nth-child(2){animation-delay:.04s}.page.active.page-enter .hero-grid>*:nth-child(3){animation-delay:.08s}.page.active.page-enter .hero-grid>*:nth-child(4){animation-delay:.12s}
+.panel,.hero-card,.metric-card,.user-card,.list-item,.pedido-card,.note-card{transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease,background .25s ease}
+.panel:hover,.hero-card:hover,.metric-card:hover{transform:translateY(-2px);border-color:var(--accent-line)!important;box-shadow:0 18px 42px rgba(0,0,0,.24),0 0 0 1px var(--accent-line)!important}
+.list-item:hover,.user-card:hover,.pedido-card:hover,.note-card:hover{transform:translateY(-1px)}
+.primary-btn,.soft-btn,.mini-btn,.nav-item,.palette-btn{transition:transform .16s ease,filter .16s ease,box-shadow .18s ease,background .22s ease,border-color .22s ease}
+.primary-btn:hover,.soft-btn:hover,.mini-btn:hover,.palette-btn:hover{transform:translateY(-1px)}
+.primary-btn:active,.soft-btn:active,.mini-btn:active,.nav-item:active,.palette-btn:active{transform:scale(.975)}
+.status-dot,.online-dot{animation:brinkaPulse 2.4s ease-in-out infinite}
+.toast.show{animation:brinkaToastIn .28s cubic-bezier(.2,.8,.2,1) both}
+.edit-modal:not(.hidden),.pedido-modal:not(.hidden){animation:brinkaOverlayIn .2s ease both}
+.edit-modal:not(.hidden) .modal-card,.pedido-modal:not(.hidden) .modal-card{animation:brinkaModalIn .28s cubic-bezier(.2,.8,.2,1) both}
+.theme-preview,.theme-sample,.app-bg,.nav-item.active,.primary-btn{transition:background .38s ease,border-color .38s ease,box-shadow .38s ease,color .25s ease}
+
+@keyframes brinkaPageIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes brinkaCardIn{from{opacity:0;transform:translateY(10px) scale(.992)}to{opacity:1;transform:none}}
+@keyframes brinkaPulse{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.08);filter:brightness(1.15)}}
+@keyframes brinkaToastIn{from{opacity:0;transform:translateX(-50%) translateY(18px) scale(.97)}to{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes brinkaOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes brinkaModalIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+
+@media(max-width:760px){.theme-options{grid-template-columns:1fr}.panel:hover,.hero-card:hover,.metric-card:hover{transform:none}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+
+/* =========================================================
+   Topbar limpa: apenas navegação + Sair + Novo fecho
+   ========================================================= */
+.sidebar,
+body.resolution-forced .sidebar,
+body.screen-desktop .sidebar,
+body.screen-tablet .sidebar,
+body.screen-mobile .sidebar{
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  background:transparent!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  box-shadow:none!important;
+  border-bottom:1px solid rgba(255,255,255,.08)!important;
+}
+
+body.light .sidebar{
+  background:transparent!important;
+  border-bottom-color:rgba(20,25,40,.10)!important;
+}
+
+.brand-card{
+  background:rgba(10,15,28,.62)!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  backdrop-filter:blur(14px)!important;
+  -webkit-backdrop-filter:blur(14px)!important;
+}
+
+.nav-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+  flex:0 0 auto!important;
+}
+
+.nav-actions .soft-btn,
+.nav-actions .primary-btn{
+  min-height:46px!important;
+  padding:0 18px!important;
+  white-space:nowrap!important;
+}
+
+.topbar{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:4px 2px!important;
+}
+
+.top-actions,
+.side-status{
+  display:none!important;
+}
+
+@media(max-width:1180px){
+  .sidebar,
+  body.resolution-forced .sidebar,
+  body.screen-desktop .sidebar,
+  body.screen-tablet .sidebar,
+  body.screen-mobile .sidebar{
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    gap:10px!important;
+  }
+  .brand-card{min-width:auto!important}
+  .brand-card .brand-name,.brand-card .brand-sub{display:none!important}
+  .nav-actions .soft-btn{padding:0 14px!important}
+  .nav-actions .primary-btn{padding:0 15px!important}
+}
+
+@media(max-width:850px){
+  .sidebar,
+  body.resolution-forced .sidebar,
+  body.screen-desktop .sidebar,
+  body.screen-tablet .sidebar,
+  body.screen-mobile .sidebar{
+    position:sticky!important;
+    top:0!important;
+    left:auto!important;
+    right:auto!important;
+    bottom:auto!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-height:72px!important;
+    padding:8px 10px!important;
+    grid-template-columns:auto minmax(0,1fr) auto!important;
+    transform:none!important;
+  }
+  .nav-list{
+    justify-content:flex-start!important;
+  }
+  .nav-actions{
+    gap:6px!important;
+  }
+  .nav-actions .soft-btn,
+  .nav-actions .primary-btn{
+    min-height:40px!important;
+    padding:0 10px!important;
+    font-size:12px!important;
+  }
+  .topbar{
+    margin-top:6px!important;
+  }
+}
+
+
+/* ===== Ajuste dashboard: remover Diferença hoje e reorganizar topo ===== */
+#page-dashboard .dashboard-hero-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr)!important;
+  grid-template-areas:
+    "main main"
+    "last total"!important;
+  gap:16px!important;
+  align-items:stretch;
+}
+#page-dashboard .dashboard-hero-grid > .hero-card-main{
+  grid-area:main;
+  min-height:148px!important;
+}
+#page-dashboard .dashboard-hero-grid > .metric-card-last{
+  grid-area:last;
+  min-height:138px!important;
+}
+#page-dashboard .dashboard-hero-grid > .metric-card-total{
+  grid-area:total;
+  min-height:138px!important;
+}
+#page-dashboard .dashboard-hero-grid > .hero-card-main,
+#page-dashboard .dashboard-hero-grid > .metric-card-last,
+#page-dashboard .dashboard-hero-grid > .metric-card-total{
+  position:relative;
+  overflow:hidden;
+}
+#page-dashboard .dashboard-hero-grid > .hero-card-main{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--pink) 64%,var(--bg2)),
+    color-mix(in srgb,var(--pink2) 54%,var(--bg2)) 58%,
+    color-mix(in srgb,var(--bg2) 90%,var(--pink) 10%))!important;
+  border-color:color-mix(in srgb,var(--pink) 42%,transparent)!important;
+}
+#page-dashboard .dashboard-hero-grid > .metric-card-last{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--orange) 34%,var(--bg2)),
+    color-mix(in srgb,var(--bg2) 90%,var(--accent-cool) 10%))!important;
+  border-color:color-mix(in srgb,var(--orange) 36%,transparent)!important;
+}
+#page-dashboard .dashboard-hero-grid > .metric-card-total{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--accent-violet) 58%,var(--bg2)),
+    color-mix(in srgb,var(--bg2) 86%,var(--accent-violet) 14%))!important;
+  border-color:color-mix(in srgb,var(--accent-violet) 38%,transparent)!important;
+}
+#page-dashboard .dashboard-hero-grid > .metric-card-last::after,
+#page-dashboard .dashboard-hero-grid > .metric-card-total::after,
+#page-dashboard .dashboard-hero-grid > .hero-card-main::after{
+  content:"";
+  position:absolute;
+  right:-24px;
+  bottom:-30px;
+  width:180px;
+  height:110px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.11),transparent 68%);
+  pointer-events:none;
+}
+body[data-color-intensity="minimal"] #page-dashboard .dashboard-hero-grid > *{
+  background:linear-gradient(145deg,var(--neutral-panel2),var(--neutral-panel))!important;
+  border-color:var(--neutral-line)!important;
+}
+body[data-color-intensity="equilibrado"] #page-dashboard .dashboard-hero-grid > .hero-card-main,
+body[data-color-intensity="balanced"] #page-dashboard .dashboard-hero-grid > .hero-card-main{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--pink) 42%,var(--neutral-panel2)),
+    color-mix(in srgb,var(--neutral-panel) 84%,var(--pink2) 16%))!important;
+}
+body[data-color-intensity="equilibrado"] #page-dashboard .dashboard-hero-grid > .metric-card-last,
+body[data-color-intensity="balanced"] #page-dashboard .dashboard-hero-grid > .metric-card-last{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--orange) 22%,var(--neutral-panel2)),
+    color-mix(in srgb,var(--neutral-panel) 90%,var(--accent-cool) 10%))!important;
+}
+body[data-color-intensity="equilibrado"] #page-dashboard .dashboard-hero-grid > .metric-card-total,
+body[data-color-intensity="balanced"] #page-dashboard .dashboard-hero-grid > .metric-card-total{
+  background:linear-gradient(125deg,
+    color-mix(in srgb,var(--accent-violet) 24%,var(--neutral-panel2)),
+    color-mix(in srgb,var(--neutral-panel) 90%,var(--accent-violet) 10%))!important;
+}
+@media (max-width: 980px){
+  #page-dashboard .dashboard-hero-grid{
+    grid-template-columns:1fr!important;
+    grid-template-areas:
+      "main"
+      "last"
+      "total"!important;
+  }
+}
