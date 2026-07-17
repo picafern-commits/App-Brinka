@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#120018" />
   <title>Desktop - Brinka Firebase — Fecho de Caixa</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="./style.css?v=brinka-topbar-clean-cor-equilibrada-20260715-2" />
+  <link rel="stylesheet" href="./style.css?v=brinka-scrollbars-hidden-20260716-1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-title" content="Brinka" />
@@ -580,12 +580,45 @@
 
       <input id="editClosureId" type="hidden" />
 
-      <div class="form-grid">
+      <div class="form-grid closure-meta-grid">
         <label><span>Utilizador</span><input id="editOperator" type="text" /></label>
         <label><span>Data</span><input id="editDate" type="datetime-local" /></label>
-        <label><span>Total</span><input id="editTotal" type="number" step="0.01" min="0" /></label>
         <label><span>Valor inicial</span><input id="editInitialValue" type="number" step="0.01" min="0" /></label>
         <label><span>Fecho anterior</span><input id="editPrevious" type="number" step="0.01" min="0" disabled /></label>
+      </div>
+
+      <div class="closure-money-view" id="editMoneySection">
+        <div class="closure-money-head">
+          <div>
+            <p class="eyebrow">Dinheiro contado</p>
+            <h4>Notas e moedas</h4>
+          </div>
+          <span class="pill" id="editMoneyModeLabel">Detalhe completo</span>
+        </div>
+
+        <div class="legacy-closure-warning hidden" id="legacyClosureWarning">
+          Este fecho antigo não possui o detalhe guardado por notas e moedas. O total pode ser consultado, mas não será inventada uma decomposição.
+        </div>
+
+        <div class="edit-money-grid" id="editMoneyGrid">
+          <section class="edit-money-card">
+            <div class="edit-money-title"><span>💶</span><div><strong>Notas</strong><small>Quantidade por valor</small></div></div>
+            <div class="edit-denomination-list" id="editNotesRows"></div>
+            <div class="edit-money-subtotal"><span>Total em notas</span><strong id="editNotesTotal">0,00 €</strong></div>
+          </section>
+          <section class="edit-money-card">
+            <div class="edit-money-title"><span>🪙</span><div><strong>Moedas</strong><small>Quantidade por valor</small></div></div>
+            <div class="edit-denomination-list" id="editCoinsRows"></div>
+            <div class="edit-money-subtotal"><span>Total em moedas</span><strong id="editCoinsTotal">0,00 €</strong></div>
+          </section>
+        </div>
+
+        <div class="edit-closure-totals">
+          <div><span>Total contado</span><strong id="editGrandTotal">0,00 €</strong></div>
+          <div><span>Diferença</span><strong id="editDifference">0,00 €</strong></div>
+          <div><span>Lucro</span><strong id="editProfit">0,00 €</strong></div>
+        </div>
+        <input id="editTotal" type="hidden" />
       </div>
 
       <label class="wide-label">

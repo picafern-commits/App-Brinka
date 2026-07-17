@@ -2799,3 +2799,71 @@ body[data-color-intensity="balanced"] #page-dashboard .dashboard-hero-grid > .me
       "total"!important;
   }
 }
+
+
+/* ===== Detalhe bonito de fechos por notas e moedas ===== */
+.edit-card{width:min(1180px,94vw)!important;max-height:92vh!important;overflow:auto!important}
+.closure-meta-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+.closure-money-view{margin:18px 0;display:grid;gap:14px}
+.closure-money-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.closure-money-head h4{font-size:22px;margin:3px 0 0}
+.legacy-closure-warning{padding:15px 17px;border-radius:16px;background:rgba(255,183,77,.12);border:1px solid rgba(255,183,77,.32);color:#ffe0ad;font-weight:750;line-height:1.45}
+.edit-money-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.edit-money-card{padding:16px;border-radius:22px;background:linear-gradient(145deg,color-mix(in srgb,var(--neutral-panel2) 92%,var(--pink) 8%),var(--neutral-panel));border:1px solid var(--neutral-line)}
+.edit-money-title{display:flex;align-items:center;gap:11px;margin-bottom:13px}
+.edit-money-title>span{width:43px;height:43px;display:grid;place-items:center;border-radius:14px;background:var(--accent-soft);font-size:22px}
+.edit-money-title strong,.edit-money-title small{display:block}.edit-money-title small{color:var(--muted);margin-top:2px}
+.edit-denomination-list{display:grid;gap:8px}
+.edit-denomination-row{display:grid;grid-template-columns:82px minmax(150px,1fr) 105px;align-items:center;gap:10px;padding:9px 11px;border-radius:14px;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.07)}
+.denomination-value{font-weight:900}.denomination-subtotal{text-align:right;font-variant-numeric:tabular-nums}
+.denomination-control{display:grid;grid-template-columns:36px minmax(62px,1fr) 36px;gap:6px}
+.denomination-control input{text-align:center!important;padding:8px!important;min-width:0}
+.qty-step{border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--text);border-radius:10px;font-size:20px;font-weight:900;cursor:pointer}
+.qty-step:hover:not(:disabled){background:color-mix(in srgb,var(--accent) 30%,transparent)}
+.qty-step:disabled{opacity:.35;cursor:default}
+.edit-money-subtotal{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:13px 14px;border-radius:14px;background:var(--accent-soft);border:1px solid var(--accent-line)}
+.edit-closure-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.edit-closure-totals>div{padding:14px;border-radius:16px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08)}
+.edit-closure-totals span,.edit-closure-totals strong{display:block}.edit-closure-totals span{color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:900;letter-spacing:.06em}.edit-closure-totals strong{font-size:23px;margin-top:6px}
+.value-positive{color:#67e8a7!important}.value-negative{color:#ff8091!important}
+.action-view{border-color:color-mix(in srgb,var(--accent-cool) 45%,transparent)!important;color:#a8dcff!important}
+@media(max-width:900px){.closure-meta-grid{grid-template-columns:1fr 1fr!important}.edit-money-grid{grid-template-columns:1fr}.edit-closure-totals{grid-template-columns:1fr}.edit-denomination-row{grid-template-columns:70px minmax(130px,1fr) 92px}}
+@media(max-width:560px){.closure-meta-grid{grid-template-columns:1fr!important}.edit-denomination-row{grid-template-columns:62px 1fr}.denomination-subtotal{grid-column:1/-1;text-align:right}.edit-card{width:96vw!important;padding:16px!important}}
+
+/* ===== Ocultar barras de scroll sem bloquear a deslocação ===== */
+html,
+body,
+.app-layout,
+.main-area,
+.content,
+.page,
+.sidebar,
+.modal-card,
+.edit-card,
+.table-wrap,
+.cards-list,
+.edit-denomination-list,
+textarea,
+select{
+  scrollbar-width:none!important;
+  -ms-overflow-style:none!important;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+.app-layout::-webkit-scrollbar,
+.main-area::-webkit-scrollbar,
+.content::-webkit-scrollbar,
+.page::-webkit-scrollbar,
+.sidebar::-webkit-scrollbar,
+.modal-card::-webkit-scrollbar,
+.edit-card::-webkit-scrollbar,
+.table-wrap::-webkit-scrollbar,
+.cards-list::-webkit-scrollbar,
+.edit-denomination-list::-webkit-scrollbar,
+textarea::-webkit-scrollbar,
+select::-webkit-scrollbar{
+  width:0!important;
+  height:0!important;
+  display:none!important;
+}
